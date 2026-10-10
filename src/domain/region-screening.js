@@ -22,9 +22,16 @@ export function screenRegion({ type, selection, surface, buildingBox }) {
     if (!blocked) reasons.push('Outward, near-vertical display faces are present. This does not prove they are exterior or unobstructed.');
     missing.push('Confirm an exterior face, window/door clearances, fixings, fire access and irrigation.');
   } else if (type === 'terrace') {
-    if (!/^(IFCSLAB|IFCROOF)$/.test(category) || !/balcon|terrace|terrasse|露台|阳台|陽台/i.test(identity)) reject('No balcony/terrace identity was found. An ordinary floor or cropped floor edge cannot be treated as a terrace.');
-    if (slope > 5) reject('This surface is not approximately horizontal enough for the terrace concept.');
-    if (!blocked) reasons.push('Named balcony/terrace with an approximately horizontal display surface. Outdoor exposure remains unverified.');
+    if (!/^(IFCSLAB|IFCROOF)$/.test(category) || !/balcon|balkon|loggia|loggien|veranda|patio|terrace|terrasse|露台|阳台|陽台/i.test(identity)) reject('No balcony/terrace identity was found. An ordinary floor or cropped floor edge cannot be treated as a terrace.');
+    // Judge horizontality on the near-horizontal area share. Balcony slabs carry thin edge geometry
+    // that skews a whole-surface average without making the walking surface itself sloped.
+    const horizontal = surface.triangles.filter((triangle) => triangle.normal[1] >= .9);
+    const horizontalArea = horizontal.reduce((sum, triangle) => sum + triangle.area, 0);
+    const horizontalFraction = surface.surfaceAreaM2 ? horizontalArea / surface.surfaceAreaM2 : 0;
+    const horizontalSlope = horizontalArea ? Math.acos(Math.min(1, Math.max(-1, horizontal.reduce((sum, triangle) => sum + triangle.normal[1] * triangle.area, 0) / horizontalArea))) * 180 / Math.PI : 90;
+    if (horizontalFraction < .5) reject(`Only ${(horizontalFraction * 100).toFixed(0)}% of the display surface is near-horizontal, so the terrace concept does not apply.`);
+    else if (horizontalSlope > 5) reject(`The near-horizontal area slopes ${horizontalSlope.toFixed(1)}°, beyond the conservative 5° terrace limit.`);
+    if (!blocked) reasons.push(`Named balcony/terrace; ${(horizontalFraction * 100).toFixed(0)}% of the display surface is near-horizontal at ${horizontalSlope.toFixed(1)}°. Outdoor exposure remains unverified.`);
     missing.push('Confirm outdoor exposure, loading, usable boundaries and unobstructed escape routes.');
   } else if (type === 'ground') {
     const xs = points.map((point) => point[0]), zs = points.map((point) => point[2]);

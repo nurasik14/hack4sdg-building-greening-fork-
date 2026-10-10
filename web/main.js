@@ -1,4 +1,6 @@
 import { calculatePlan, PLANS, REGION_TYPES } from '../src/domain/greening-plan.js';
+import { adjustPlan, buildPlanProposals, buildProposal, collectUnresolvedChecks, explainProposal, rankProposals, PROPOSAL_VERSION } from '../src/domain/proposals.js';
+import { createNarrator, requestNarration } from '../src/domain/ai-narrator.js';
 
 const $ = (id) => document.getElementById(id);
 // Delegation also covers dynamically created region-removal buttons.
@@ -48,7 +50,21 @@ let proposalRows = [];
 let recommendedGuids = new Map();
 let recommendationVersion = null;
 let lastHighlightKey = null;
+// No AI service is configured by default; the presentation stays rule-based until one is connected.
+let narrator = createNarrator();
+let narrationState = { source: 'rule-based', generator: null, note: '' };
 const candidateCache = new Map();
+const narrationLanguage = () => $('voice-language').value.startsWith('zh') ? 'zh' : 'en';
+function updateAiDisclosure() {
+  const connected = narrator.isConfigured();
+  const generated = narrationState.source === 'model-generated';
+  $('ai-disclosure').textContent = connected
+    ? (generated ? 'AI explanation service connected · current narrative is model-generated. Numbers, approval and certification remain excluded.' : 'AI explanation service connected · explanations remain rule-based until a safe reply is received. Suggestions are conditional concepts, not engineering approval.')
+    : 'Geometry screening · AI model not connected. Suggestions are conditional concepts, not engineering approval.';
+  $('ai-status').textContent = connected
+    ? `Connected to ${narrator.describe().provider} · ${narrator.describe().model}. Only proposal text is sent; replies with numbers or approval language are rejected.`
+    : 'No AI service connected. Rule-based explanations are used.';
+}
 async function screenedCandidates(type) {
   if (!viewer || !loadedModel || importing) return [];
   const model = loadedModel, version = model.modelVersion, key = `${version}:${type}`;
@@ -89,7 +105,10 @@ const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => (
 function calculationInputs() {
   return { regions: plannedRegions, years: Number($('years').value), budgetHkd: $('budget').value === '' ? undefined : Number($('budget').value) };
 }
-function planResults() { return PLANS.map((plan) => calculatePlan({ ...calculationInputs(), plan })); }
+// One accessor feeds both the calculation and the viewer overlay, so displayed coverage always
+// equals calculated coverage (TEAM_TASKS: A shows the same fraction supplied to the calculation).
+function activePlans() { return PLANS.map((plan) => adjustPlan(plan, plannedRegions)); }
+function planResults() { return activePlans().map((plan) => calculatePlan({ ...calculationInputs(), plan })); }
 let loadedModel = null;
 const workspacePanels = [...document.querySelectorAll('.workspace-panel')];
 const panelLaunchers = [...document.querySelectorAll('[data-panel][aria-expanded]')];
@@ -169,6 +188,14 @@ async function analyseLocations(question = '', { open = true } = {}) {
         const details = document.createElement('details'), summary = document.createElement('summary'), reason = document.createElement('p');
         summary.textContent = 'Why this candidate / missing checks'; reason.className = 'note';
         reason.textContent = [...candidate.screening.reasons, ...candidate.screening.missing].join(' '); details.append(summary, reason);
+        // A structured proposal per candidate: same rules as the confirmed regions, disclosed inline.
+        const draftProposal = buildProposal({
+          region: { id: `draft:${candidate.globalId}`, projectId: 'LOCAL-BUILDING-REVIEW', modelVersion: candidate.modelVersion, type, globalId: candidate.globalId, localId: candidate.localId, name: candidate.name, usableArea: { value: candidate.geometryAreaM2, unit: 'm2', provenance: 'assumed', source: 'Display mesh estimate assuming model coordinates are metres; user confirmation required' }, screening: candidate.screening },
+          system: PLANS[0].profiles[type], plan: PLANS[0], language: narrationLanguage()
+        });
+        const badge = document.createElement('p'); badge.className = 'proposal-badge';
+        badge.textContent = draftProposal.explanation.source === 'model-generated' ? 'Model-generated · not verified' : 'Rule-based explanation';
+        const explained = document.createElement('p'); explained.className = 'note'; explained.textContent = draftProposal.explanation.text;
         const systems = document.createElement('p'); systems.className = 'note'; systems.textContent = PLANS.map(plan => `${plan.name}: ${plan.profiles[type].name}`).join(' · ');
         const areaLabel = document.createElement('label'); areaLabel.className = 'candidate-area'; areaLabel.append('Usable area (m²)');
         const area = document.createElement('input'); area.type = 'number'; area.min = '.01'; area.step = '.01'; area.max = String(candidate.geometryAreaM2);
@@ -183,23 +210,34 @@ async function analyseLocations(question = '', { open = true } = {}) {
           catch (error) { $('assistant-answer').textContent = error.message; }
         });
         const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remove from selection';
-        const record = { type, candidate, picked: previous.get(candidate.globalId)?.type === type, area, areaError, locate, remove, row, section };
+        const record = { type, candidate, proposal: draftProposal, picked: previous.get(candidate.globalId)?.type === type, area, areaError, locate, remove, row, section };
         remove.addEventListener('click', () => { record.picked = false; $('confirm-combination').checked = false; updateCombinationControls(); });
         area.addEventListener('input', () => { $('confirm-combination').checked = false; updateCombinationControls(); });
-        row.append(choice, estimate, details, systems, areaLabel, areaError, locate, remove);
+        row.append(choice, estimate, details, badge, explained, systems, areaLabel, areaError, locate, remove);
         proposalRows.push(record); section.append(row);
       });
       $('assistant-candidates').append(section);
     }
     recommendationVersion = version;
-    const limits = { roof: 3, facade: 2, terrace: 2 }, countsByType = {};
-    recommendedGuids = new Map();
-    for (const row of proposalRows) if (!(row.type === 'roof' && proposalRows.some(other => other.type === 'terrace' && other.candidate.globalId === row.candidate.globalId)) && requested.includes(row.type) && !plannedRegions.some(region => region.globalId === row.candidate.globalId) && !recommendedGuids.has(row.candidate.globalId) && (countsByType[row.type] ?? 0) < (limits[row.type] ?? 0)) {
-      recommendedGuids.set(row.candidate.globalId, row.type); countsByType[row.type] = (countsByType[row.type] ?? 0) + 1;
-    }
+    recommendedGuids = new Map(rankProposals(proposalRows.map((row) => ({ globalId: row.candidate.globalId, type: row.type })), {
+      assignedGlobalIds: plannedRegions.map((region) => region.globalId),
+      requested
+    }).map((item) => [item.globalId, item.type]));
     const chinese = /[\u3400-\u9fff]/.test(question) || (!question && $('voice-language').value.startsWith('zh'));
+    const language = chinese ? 'zh' : 'en';
     const summary = Object.entries(counts).map(([type, count]) => `${chinese ? {roof:'屋顶',facade:'立面',terrace:'露台',ground:'庭院'}[type] : REGION_TYPES[type]}: ${count}`).join(' · ');
-    $('assistant-answer').textContent = chinese ? `初筛：${summary}。蓝色是推荐起点，绿色是已选位置。关闭面板，直接点击建筑加入或取消；点击别处保留之前的选择。Inspect 只列出你选中的位置，核查可用面积和工程条件后统一加入两套方案。立面需确认外墙，普通楼板不当作露台，庭院需单独确认用地。当前使用规则筛选，尚未接入 AI。` : `Conditional candidates: ${summary}. Blue marks a suggested starting set; green marks your selections. Close Inspect and click the building to add or remove locations. Earlier choices remain selected. Review usable areas and missing engineering checks here before adding the set to both plans. Exterior walls and land availability require confirmation. Rule-based screening; AI is not connected.`;
+    // One optional narration for the whole screened set; a failure silently keeps the rules.
+    const narrated = await requestNarration({ narrator, proposal: proposalRows[0]?.proposal ?? { type: 'roof', typeLabel: REGION_TYPES.roof, systemName: '', coverageFraction: 0, baseCoverageFraction: 0, appliedConstraints: [], reasons: [], unresolvedChecks: [], status: 'unknown' }, language });
+    if (epoch !== assistantEpoch || loadedModel?.modelVersion !== version || importing) return;
+    narrationState = { source: narrated.source, generator: narrated.generator ?? null, note: narrated.note ?? '' };
+    updateAiDisclosure();
+    const disclosure = narrated.source === 'model-generated'
+      ? (chinese ? `說明由外部 AI 模型產生（${narrated.generator?.provider ?? '外部服務'} · ${narrated.generator?.model ?? ''}），不含任何計算結果或審批結論。` : `Explanations are model-generated (${narrated.generator?.provider ?? 'external service'} · ${narrated.generator?.model ?? ''}); they contain no calculated values and no approval.`)
+      : (chinese ? '當前使用規則篩選，尚未接入 AI。' : 'Rule-based screening; AI is not connected.');
+    const guidance = chinese
+      ? `初筛：${summary}。蓝色是推荐起点，绿色是已选位置。关闭面板，直接点击建筑加入或取消；点击别处保留之前的选择。Inspect 只列出你选中的位置，核查可用面积和工程条件后统一加入两套方案。立面需确认外墙，普通楼板不当作露台，庭院需单独确认用地。${disclosure}`
+      : `Conditional candidates: ${summary}. Blue marks a suggested starting set; green marks your selections. Close Inspect and click the building to add or remove locations. Earlier choices remain selected. Review usable areas and missing engineering checks here before adding the set to both plans. Exterior walls and land availability require confirmation. ${disclosure}`;
+    $('assistant-answer').textContent = narrated.source === 'model-generated' ? `${guidance} ${narrated.text}` : guidance;
 
   } catch (error) { if (epoch === assistantEpoch) { proposalRows = previousRows; $('assistant-candidates').replaceChildren(...previousSections); $('assistant-answer').textContent = `Location screening failed: ${error.message}. Earlier selections are preserved. Try finding locations again.`; } }
   finally { if (epoch === assistantEpoch) { analysing = false; $('combination-controls').hidden = !proposalRows.length; refreshImportControls(); } }
@@ -277,7 +315,7 @@ $('add-combination').addEventListener('click', async () => {
     const added = await viewer.addCandidateRegions(requests, $('confirm-combination').checked);
     if (epoch !== combinationEpoch) return;
     $('confirm-combination').checked = false;
-    selected = lastPlan; viewer.setPlan(PLANS.find(plan => plan.id === selected), true); render();
+    selected = lastPlan; viewer.setPlan(activePlans().find(plan => plan.id === selected), true); render();
     $('combination-status').textContent = `${added.length} regions added together. Open Compare to review totals for all ${plannedRegions.length} planned regions, or remove regions in Planned regions to revise the set.`;
     showStatus('Showing combined planting. Before / After and Compare use all confirmed regions.');
   } catch (error) { if (epoch === combinationEpoch) $('combination-status').textContent = error.message; }
@@ -303,6 +341,23 @@ $('voice-record').addEventListener('click', () => {
   try { current.start(); } catch (error) { recognition = null; resetVoiceButton(); $('voice-status').textContent = error.message; }
 });
 $('inspector-panel').addEventListener('close', stopVoice);
+
+// Optional AI narration. The key lives only in this tab; it is never stored, exported or logged.
+$('ai-connect').addEventListener('click', () => {
+  const endpoint = $('ai-endpoint').value.trim();
+  if (endpoint && !/^https:\/\//i.test(endpoint)) { $('ai-status').textContent = 'Use an HTTPS endpoint. The key would otherwise be sent in clear text.'; return; }
+  narrator = createNarrator({ endpoint, model: $('ai-model').value.trim(), apiKey: $('ai-key').value });
+  narrationState = { source: 'rule-based', generator: null, note: '' };
+  updateAiDisclosure();
+  if (narrator.isConfigured()) $('ai-key').value = '';
+});
+$('ai-clear').addEventListener('click', () => {
+  narrator = createNarrator();
+  narrationState = { source: 'rule-based', generator: null, note: '' };
+  $('ai-endpoint').value = ''; $('ai-model').value = ''; $('ai-key').value = '';
+  updateAiDisclosure();
+});
+updateAiDisclosure();
 
 const samples = {
   'kit-office': { name: 'KIT-Office.ifc', format: 'ifc', preview: 'KIT-Office-preview.png', source: 'https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples', description: 'Architectural office design example from KIT: exterior walls, windows and roof geometry. Fictional design, not a verified built project. 10.9 MB.' },
@@ -399,7 +454,7 @@ $('add-region').addEventListener('click', () => {
     viewer.confirmRegion(draftRegion.id, Number($('area').value), $('confirm-constraints').checked);
     invalidateRegionDraft();
     selected = lastPlan;
-    viewer.setPlan(PLANS.find((plan) => plan.id === selected), true);
+    viewer.setPlan(activePlans().find((plan) => plan.id === selected), true);
     render();
     $('region-draft-status').textContent = 'Region added to both plans. Open Compare or select another component to continue.';
     showStatus('Showing proposed planting. Use Before / After to compare the same model.');
@@ -428,7 +483,7 @@ function showRegions(regions) {
 function setPreview(planId) {
   if (!plannedRegions.length) { openPanel('inspector-panel'); showStatus('Add a confirmed region before previewing planting.'); return; }
   selected = planId;
-  if (planId) { lastPlan = planId; viewer.setPlan(PLANS.find((plan) => plan.id === planId), true); }
+  if (planId) { lastPlan = planId; viewer.setPlan(activePlans().find((plan) => plan.id === planId), true); }
   else viewer.setBeforeAfter(false);
   render();
   showStatus(planId ? 'Showing proposed planting. Use Before / After to compare the same model.' : 'Showing the original building. Proposed planting is hidden.');
@@ -442,7 +497,21 @@ function downloadReport(content, type, name) {
 }
 function handoff() {
   const { years, budgetHkd } = calculationInputs();
-  return { schemaVersion: 'building-greening-regions-1', generatedAt: new Date().toISOString(), model: loadedModel, inputs: { years, budgetHkd: budgetHkd ?? null }, regionUseProvenance: 'user-confirmed', regions: plannedRegions, preview: selected ?? 'before', plans: planResults(), warning: 'Presentation factors, not measured performance. Display geometry estimates assume metres. Professional engineering review is unresolved; no whole-building net-zero or certification claim.' };
+  const proposals = buildPlanProposals({ regions: plannedRegions, plans: activePlans(), language: narrationLanguage() });
+  return {
+    schemaVersion: 'building-greening-regions-1', generatedAt: new Date().toISOString(), model: loadedModel,
+    inputs: { years, budgetHkd: budgetHkd ?? null }, regionUseProvenance: 'user-confirmed', regions: plannedRegions,
+    preview: selected ?? 'before', plans: planResults(),
+    proposalVersion: PROPOSAL_VERSION,
+    explanation: {
+      source: narrationState.source,
+      generator: narrationState.generator ?? null,
+      note: narrationState.note || 'Deterministic screening and constraint rules produced these explanations; no AI model was used.'
+    },
+    proposals,
+    unresolvedChecks: collectUnresolvedChecks(proposals),
+    warning: 'Presentation factors, not measured performance. Display geometry estimates assume metres. Professional engineering review is unresolved; no whole-building net-zero or certification claim.'
+  };
 }
 $('export-handoff').addEventListener('click', () => {
   try { downloadReport(JSON.stringify(handoff(), null, 2), 'application/json', 'building-greening-handoff.json'); }
@@ -452,7 +521,7 @@ $('export-report').addEventListener('click', () => {
   try {
     const report = handoff();
     const tables = report.plans.map((plan) => `<h2>${escapeHtml(plan.planName)}</h2><p>Covered area: ${plan.coverageM2.toFixed(2)} m² · Installation: ${money(plan.installationCostHkd)} · ${plan.years}-year total cost: ${money(plan.totalCostHkd)} · Carbon difference: ${plan.netDifferenceKgCo2e.toFixed(2)} kgCO₂e</p><table><tr><th>Region / IFC identity</th><th>System</th><th>Area</th><th>Installation</th></tr>${plan.items.map((item) => `<tr><td>${escapeHtml(item.regionName)}<small>${escapeHtml(item.globalId ?? item.regionId)}</small></td><td>${escapeHtml(item.systemName)}</td><td>${item.coverageM2.toFixed(2)} m²</td><td>${money(item.installationCostHkd)}</td></tr>`).join('')}</table><ul>${plan.checks.map((check) => `<li>${escapeHtml(check)}</li>`).join('')}</ul>`).join('');
-    downloadReport(`<!doctype html><html lang="en"><meta charset="utf-8"><title>Building Greening Report</title><style>body{font:14px system-ui;max-width:1000px;margin:40px auto;padding:24px;color:#243432}h1,h2{color:#276754}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd}small{display:block;overflow-wrap:anywhere;color:#678}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f6f4;padding:16px}@media print{body{margin:0}h2{break-after:avoid}}</style><h1>Building greening comparison</h1><p>${escapeHtml(report.model.fileName)} · ${escapeHtml(report.generatedAt)}</p><p>Comparison period: ${report.inputs.years} years · Installation budget: ${report.inputs.budgetHkd === null ? "Not entered" : money(report.inputs.budgetHkd)}</p><p>${escapeHtml(report.warning)}</p>${tables}<h2>Traceable regions, factors and scenario results</h2><pre>${escapeHtml(JSON.stringify(report, null, 2))}</pre></html>`, 'text/html', 'building-greening-report.html');
+    downloadReport(`<!doctype html><html lang="en"><meta charset="utf-8"><title>Building Greening Report</title><style>body{font:14px system-ui;max-width:1000px;margin:40px auto;padding:24px;color:#243432}h1,h2{color:#276754}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd}small{display:block;overflow-wrap:anywhere;color:#678}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f6f4;padding:16px}@media print{body{margin:0}h2{break-after:avoid}}</style><h1>Building greening comparison</h1><p>${escapeHtml(report.model.fileName)} · ${escapeHtml(report.generatedAt)}</p><p>Comparison period: ${report.inputs.years} years · Installation budget: ${report.inputs.budgetHkd === null ? "Not entered" : money(report.inputs.budgetHkd)}</p><p>${escapeHtml(report.warning)}</p><p><strong>Explanations:</strong> ${escapeHtml(report.explanation.source === 'model-generated' ? `Model-generated (${report.explanation.generator?.provider ?? 'external service'} · ${report.explanation.generator?.model ?? ''}) — contains no calculated values and carries no approval, certification or engineering clearance.` : 'Rule-based screening and constraint rules; no AI model was connected.')}</p>${tables}<h2>Traceable regions, factors and scenario results</h2><pre>${escapeHtml(JSON.stringify(report, null, 2))}</pre></html>`, 'text/html', 'building-greening-report.html');
   } catch (error) { $('error').textContent = error.message; }
 });
 

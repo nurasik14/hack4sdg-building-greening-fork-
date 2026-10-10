@@ -65,7 +65,7 @@
       <dialog id="inspector-panel" class="workspace-panel side-panel" aria-labelledby="inspector-heading">
         <div class="panel-heading"><div><p class="eyebrow">SELECTED COMPONENT</p><h2 id="inspector-heading">Inspect &amp; plan</h2></div><button type="button" class="close-panel" data-close-panel aria-label="Close component panel">×</button></div>
         <div class="panel-body"><details class="source-inspection"><summary>Focused component · IFC details</summary><div id="selection-details" class="selection-panel empty-text">Select a roof, wall or other component in the model to inspect its IFC identity.</div><button id="clear-selection" type="button" class="secondary-button" disabled>Clear focused component</button></details><section id="inspection-guidance" class="region-editor"><h3>Find planting locations</h3>
-          <p class="notice">Geometry screening · AI model not connected. Suggestions are conditional concepts, not engineering approval.</p>
+          <p id="ai-disclosure" class="notice">Geometry screening · AI model not connected. Suggestions are conditional concepts, not engineering approval.</p>
           <button id="analyse-building" type="button" class="secondary-button">Find planting locations</button>
           <details class="voice-controls"><summary>Voice input &amp; questions</summary>
           <label for="voice-language">Voice language</label><select id="voice-language"><option value="zh-HK">粵語（香港）</option><option value="zh-CN">普通话</option><option value="en-US">English</option></select>
@@ -73,6 +73,15 @@
           <p id="voice-status" class="note" role="status">Audio may be processed by your browser's speech service. Review the transcript before asking. Language support depends on your browser.</p>
           <label for="assistant-question">Ask about roof, facade, terrace or courtyard</label><textarea id="assistant-question" rows="3" maxlength="1000" placeholder="這棟樓邊度可以加綠化？ / Where can we add planting?"></textarea>
           <button id="assistant-ask" type="button" class="secondary-button">Ask about locations</button>
+          </details>
+          <details class="voice-controls ai-controls"><summary>Optional AI explanation and system selection</summary>
+          <p class="note">Explanations and system choices stay rule-based until you connect a service. If connected, only proposal text and the list of allowed system names are sent — never IFC data, areas, costs or carbon figures — and any reply containing a number or approval language is rejected. The model may only pick systems that already exist in this application; coverage, cost and carbon always come from the built-in rules. The key stays in this browser tab; it is never saved, exported or committed.</p>
+          <label for="ai-endpoint">Chat-completions endpoint (HTTPS)</label><input id="ai-endpoint" type="url" placeholder="https://api.example.com/v1/chat/completions" autocomplete="off" spellcheck="false" />
+          <label for="ai-model">Model</label><input id="ai-model" type="text" placeholder="model name" autocomplete="off" spellcheck="false" />
+          <label for="ai-key">API key</label><input id="ai-key" type="password" autocomplete="off" />
+          <button id="ai-connect" type="button" class="secondary-button">Connect AI explanations and selection</button>
+          <button id="ai-clear" type="button" class="secondary-button">Disconnect and forget key</button>
+          <p id="ai-status" class="note" role="status">No AI service connected. Rule-based explanations are used.</p>
           </details>
           <p id="assistant-answer" class="note" role="status">Load a model to screen locations. Recommended locations appear blue; click the building to select multiple locations in green, then review their areas and checks here.</p>
           <div id="combination-controls" hidden>

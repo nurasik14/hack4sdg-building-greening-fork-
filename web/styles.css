@@ -206,6 +206,8 @@ select { width: 100%; border: 1px solid var(--border); border-radius: 6px; paddi
 #assistant-candidates .candidate-choice strong { margin: 0; overflow-wrap: anywhere; }
 .candidate-choice input { flex: 0 0 auto; margin-top: 2px; accent-color: var(--accent); }
 .proposal-candidate details > summary, .more-candidates > summary { cursor: pointer; font-size: 11px; color: var(--muted); line-height: 1.5; }
+.proposal-badge { display: inline-block; margin: 12px 0 0; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 4px; background: #edf3ef; color: var(--accent); }
+.ai-controls input { padding: 9px; border-radius: 6px; width: 100%; border: 1px solid var(--border); margin-top: 6px; }
 #inspection-guidance .candidate-area { margin-top: 12px; }
 .candidate-area input { padding: 9px; border-radius: 6px; width: 100%; border: 1px solid var(--border); margin-top: 6px; }
 #inspection-guidance .grid-option { display: flex; align-items: flex-start; line-height: 1.6; gap: 10px; }

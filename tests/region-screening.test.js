@@ -22,6 +22,24 @@ test('rejects steep roof concepts and known internal walls',()=>{
  assert.equal(screen('facade',selection('IFCWALL','Wall',[{name:'IsExternal',value:false}])).canPrepare,false);
  assert.equal(screen('facade',selection('IFCWALL','Wall')).status,'conditional');
 });
+test('recognises German and other balcony identities without admitting ordinary floors',()=>{
+ assert.equal(screen('terrace',selection('IFCSLAB','prefab balkon')).canPrepare,true);
+ assert.equal(screen('terrace',selection('IFCSLAB','prefab balkon')).status,'conditional');
+ assert.equal(screen('terrace',selection('IFCSLAB','Balkonplatte')).canPrepare,true);
+ assert.equal(screen('terrace',selection('IFCSLAB','Loggia')).canPrepare,true);
+ assert.equal(screen('terrace',selection('IFCSLAB','Veranda')).canPrepare,true);
+ assert.equal(screen('terrace',selection('IFCSLAB','Balkon-001')).canPrepare,true);
+ assert.equal(screen('terrace',selection('IFCROOF','Dachterrasse')).canPrepare,true);
+ assert.equal(screen('terrace',selection('IFCSLAB','Floor')).canPrepare,false);
+ assert.equal(screen('terrace',selection('IFCSLAB','Floor:Wood-External')).canPrepare,false);
+});
+test('only the name and typed identity attributes establish a terrace, not other properties',()=>{
+ // KIT-Office carries IFCPROPERTYSINGLEVALUE('Abzug in % (Balkone, Loggien)'); property labels are not element identity.
+ assert.equal(screen('terrace',selection('IFCSLAB','Floor',[{name:'Description',value:'Balkon'}])).canPrepare,false);
+ assert.equal(screen('terrace',selection('IFCSLAB','Floor',[{name:'Abzug in %',value:'Balkone, Loggien'}])).canPrepare,false);
+ assert.equal(screen('terrace',selection('IFCSLAB','Ceiling')).canPrepare,false);
+ assert.equal(screen('terrace',selection('IFCROOF','Roof')).canPrepare,false);
+});
 test('ground proposals cannot overlap the bounding footprint and cannot imply land approval',()=>{
  assert.equal(screen('ground',null,surface).canPrepare,false);
  const outside=screen('ground',null,groundSurface({x:0,y:0,z:9,width:4,depth:4}));

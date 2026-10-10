@@ -12,7 +12,7 @@ An IFC-based presentation workspace for building professionals to compare greeni
 6. In **Project**, edit the comparison period/budget or load another model. Replacement clears old regions and overlays.
 7. Download the HTML comparison report and JSON handoff. They retain current model/IFC identities, areas, systems, factors, checks and results for team integration.
 
-**Voice interaction stays in Inspect.** Expand **Voice input & questions**, choose Cantonese/Mandarin/English, start recording and review/edit the transcript. Choose **Ask about locations** to run the same screening, or type directly. Nothing is added automatically. Microphone access and language support depend on the browser; speech audio may be processed by its speech service. There is no separate Assist panel and no AI model connection yet.
+**Voice interaction stays in Inspect.** Expand **Voice input & questions**, choose Cantonese/Mandarin/English, start recording and review/edit the transcript. Choose **Ask about locations** to run the same screening, or type directly. Nothing is added automatically. Microphone access and language support depend on the browser; speech audio may be processed by its speech service. There is no separate Assist panel. Explanations are rule-based by default; **Optional AI explanation service** in Inspect can connect a user-supplied HTTPS chat-completions endpoint. Only proposal text is sent — never IFC data, areas, costs or carbon figures — and any reply containing a number or approval language is rejected, with a silent fallback to the rule-based text. The key stays in the tab and is never saved or exported.
 
 A/B/C/D presentation responsibilities and browser acceptance are in [TEAM_TASKS.md](TEAM_TASKS.md); implementation and provenance boundaries are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -24,7 +24,7 @@ A/B/C/D presentation responsibilities and browser acceptance are in [TEAM_TASKS.
 
 Current costs/carbon factors are explicitly labelled presentation assumptions. Display mesh areas assume renderer units are metres and require user confirmation; confirmed area is not professional engineering approval. The comparison covers proposed interventions only, excludes plant carbon sequestration, and does not establish whole-building emissions or net-zero status. Structural loading, waterproofing, drainage, facade fixings, access/fire strategy, irrigation and land/utility availability remain unresolved checks.
 
-Scenario profiles are structured rules. No external AI service, government incentive approval, certification or marketplace transaction is claimed. Local IFC files are processed in the browser.
+Scenario profiles and location screening are structured rules. Explanations are labelled `rule-based` or `model-generated` in the interface and in both exports; a generated narrative never supplies arithmetic or approval. No government incentive approval, certification or marketplace transaction is claimed. Local IFC files are processed in the browser.
 
 ## Architectural samples and licensing
 

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PLANS } from '../src/domain/greening-plan.js';
-import { applyConstraints, buildProposal, buildPlanProposals, explainProposal, rankProposals, adjustPlan, collectUnresolvedChecks, DEFAULT_LIMITS } from '../src/domain/proposals.js';
+import { applyConstraints, buildProposal, buildPlanProposals, explainProposal, rankProposals, adjustPlan, collectUnresolvedChecks, selectionsConverge, systemOptions, DEFAULT_LIMITS } from '../src/domain/proposals.js';
 const plan = PLANS[0];
 const screening = (status = 'conditional', reasons = [], missing = ['Structural capacity requires review.']) => ({ status, canPrepare: status !== 'blocked', reasons, missing });
 const region = (type, extra = {}) => ({ id: `r-${type}`, projectId: 'p', modelVersion: 'sha256:m', type, globalId: `g-${type}`, localId: 1, name: `${type} component`, geometrySource: 'IFC display triangles', screening: screening(), usableArea: { value: 100, unit: 'm2', provenance: 'user-confirmed', source: 'User confirmed' }, ...extra });
@@ -90,6 +90,23 @@ test('ranking keeps caps, prefers terrace over roof and skips assigned component
  assert.equal(rankProposals(null, {}).length, 0);
 });
 
+test('a selection that collapses the two plans is detected so defaults can be kept',()=>{
+ const types = ['roof','facade'];
+ // Both plans picking the landscape roof system is what would erase the comparison.
+ assert.equal(selectionsConverge({ plans: PLANS, types:['roof'], choicesByPlan:{ light:{ roof:'intensive' }, landscape:{ roof:'intensive' } } }), true);
+ assert.equal(selectionsConverge({ plans: PLANS, types, choicesByPlan:{ light:{ roof:'intensive', facade:'living-wall' }, landscape:{ roof:'intensive', facade:'living-wall' } } }), true);
+ // Echoing each plan's own default is not convergence; they still differ from each other.
+ assert.equal(selectionsConverge({ plans: PLANS, types, choicesByPlan:{} }), false);
+ assert.equal(selectionsConverge({ plans: PLANS, types, choicesByPlan:{ light:{ roof:'extensive' }, landscape:{ roof:'intensive' } } }), false);
+ // Diverging only on one of several types still leaves the plans distinguishable.
+ assert.equal(selectionsConverge({ plans: PLANS, types, choicesByPlan:{ light:{ roof:'intensive', facade:'climbers' }, landscape:{ roof:'intensive', facade:'living-wall' } } }), false);
+ // Degenerate input is never reported as convergence.
+ assert.equal(selectionsConverge({ plans: PLANS, types:[] }), false);
+ assert.equal(selectionsConverge({ plans: [PLANS[0]], types, choicesByPlan:{ light:{ roof:'intensive' } } }), false);
+ assert.equal(selectionsConverge({ plans: PLANS, types:['basement'] }), false);
+ assert.equal(selectionsConverge(), false);
+});
+
 test('plan adjustment is per region type, conservative and never mutates the source plan',()=>{
  const before = plan.profiles.roof.coverageFraction;
  const adjusted = adjustPlan(plan, [region('roof'), region('facade')]);
@@ -106,6 +123,59 @@ test('plan adjustment is per region type, conservative and never mutates the sou
  const steep = region('roof', { screening: screening('conditional',['average slope 18.0°.']) });
  const mixed = adjustPlan(plan, [region('roof'), steep]);
  assert.ok(mixed.profiles.roof.coverageFraction <= adjustPlan(plan, [region('roof')]).profiles.roof.coverageFraction);
+});
+
+test('system options are derived from the plans and only ever offer real profiles',()=>{
+ for (const type of ['roof','facade','terrace','ground']) {
+  const options = systemOptions(type);
+  assert.equal(options.length, 2, `${type} offers exactly the two built-in systems`);
+  assert.deepEqual(options.map(entry=>entry.systemId), [PLANS[0].profiles[type].id, PLANS[1].profiles[type].id]);
+  // Identity, not a copy: the shared profiles are never duplicated or mutated.
+  assert.equal(options[0].profile, PLANS[0].profiles[type]);
+  assert.equal(options[1].profile, PLANS[1].profiles[type]);
+ }
+ assert.deepEqual(systemOptions('basement'), []);
+ assert.deepEqual(systemOptions(null), []);
+});
+
+test('an AI system choice is honoured only from the catalogue and applied before constraints',()=>{
+ const light = PLANS[0], landscape = PLANS[1];
+ // The model picks the landscape roof system for the light plan: base becomes 0.4, then the rule.
+ const swapped = adjustPlan(light, [region('roof')], { roof: landscape.profiles.roof.id });
+ assert.equal(swapped.profiles.roof.id, landscape.profiles.roof.id);
+ assert.equal(swapped.profiles.roof.name, landscape.profiles.roof.name, 'the real system is used, not a fabricated one');
+ assert.deepEqual(swapped.profiles.roof.checks, landscape.profiles.roof.checks);
+ // The chosen system's own base fraction is what the constraint rules then scale down.
+ near(swapped.profiles.roof.coverageFraction, landscape.profiles.roof.coverageFraction * .95);
+ assert.ok(swapped.profiles.roof.coverageFraction < landscape.profiles.roof.coverageFraction);
+ assert.equal(swapped.systemSelection.roof.systemId, landscape.profiles.roof.id);
+ assert.equal(swapped.systemSelection.roof.defaultSystemId, light.profiles.roof.id);
+ assert.equal(swapped.systemSelection.roof.changed, true);
+ // Echoing the plan's own system is accepted but is not a change.
+ const same = adjustPlan(light, [region('roof')], { roof: light.profiles.roof.id });
+ assert.equal(same.systemSelection.roof.changed, false);
+ // Anything outside the catalogue leaves the plan untouched.
+ for (const bad of [{ roof:'sedum-turf' }, { roof:'extensive ' }, { roof: 42 }, { roof:null }, { roof:{} }, { basement:'extensive' }, { facade:'extensive' }]) {
+  assert.equal(adjustPlan(light, [region('roof')], bad).profiles.roof.id, light.profiles.roof.id, JSON.stringify(bad));
+ }
+ assert.equal(adjustPlan(light, [region('roof')], null).profiles.roof.id, light.profiles.roof.id);
+ assert.equal(adjustPlan(light, [region('roof')], 'extensive').profiles.roof.id, light.profiles.roof.id);
+ assert.equal(adjustPlan(light, [region('roof')], JSON.parse('{"__proto__":{"polluted":true},"roof":"intensive"}')).profiles.roof.id, landscape.profiles.roof.id);
+ assert.equal({}.polluted, undefined);
+});
+
+test('a system choice never mutates the shared plans, even with no regions',()=>{
+ const before = PLANS[0].profiles.roof.id;
+ assert.equal(adjustPlan(PLANS[0], [], null), PLANS[0], 'unchanged plans are returned by identity');
+ const chosen = adjustPlan(PLANS[0], [], { roof:'intensive' });
+ assert.notEqual(chosen, PLANS[0]);
+ assert.equal(chosen.profiles.roof, PLANS[1].profiles.roof, 'the shared profile object is reused, never copied or mutated');
+ assert.equal(chosen.profiles.roof.id, 'intensive');
+ assert.equal(PLANS[0].profiles.roof.id, before);
+ assert.equal(PLANS[0].profiles.roof.coverageFraction, .6);
+ assert.equal(chosen.systemSelection.roof.changed, true);
+ // Untouched types keep the original profile object.
+ assert.equal(chosen.profiles.terrace, PLANS[0].profiles.terrace);
 });
 
 test('plan proposals cover both plans and aggregate unresolved checks',()=>{

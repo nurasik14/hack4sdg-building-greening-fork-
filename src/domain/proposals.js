@@ -1,4 +1,4 @@
-import { REGION_TYPES } from './greening-plan.js';
+import { PLANS, REGION_TYPES } from './greening-plan.js';
 
 /**
  * Structured greening proposals for workstream C.
@@ -14,6 +14,43 @@ export const DEFAULT_LIMITS = { roof: 3, facade: 2, terrace: 2 };
 
 const round = (value) => Math.round(value * 1e4) / 1e4;
 const clampCoverage = (value, base) => Math.min(base, Math.max(0.05, round(value)));
+
+/** Keys that must never be read off untrusted JSON, however it was parsed. */
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const ownKeys = (value) => (value && typeof value === 'object' && !Array.isArray(value)
+  ? Object.keys(value).filter((key) => !UNSAFE_KEYS.has(key))
+  : []);
+
+/**
+ * The greening systems a region type may use, derived from the plans rather than a hardcoded list so
+ * a new plan cannot drift away from what this function offers. Profiles are returned by reference:
+ * they are shared module state and must never be copied or mutated.
+ */
+export function systemOptions(type) {
+  if (!REGION_TYPES[type]) return [];
+  const seen = new Set();
+  const options = [];
+  for (const plan of PLANS) {
+    const profile = plan.profiles?.[type];
+    if (!profile?.id || seen.has(profile.id)) continue;
+    seen.add(profile.id);
+    options.push({ systemId: profile.id, systemName: profile.name, profile });
+  }
+  return options;
+}
+
+/** Resolves an AI system choice to real catalogue profiles. Anything invalid is dropped silently. */
+function acceptedSwaps(plan, systemChoices) {
+  const swaps = new Map();
+  for (const type of ownKeys(systemChoices)) {
+    if (!plan.profiles[type]) continue;
+    const wanted = systemChoices[type];
+    if (typeof wanted !== 'string') continue;
+    const option = systemOptions(type).find((entry) => entry.systemId === wanted);
+    if (option) swaps.set(type, option.profile);
+  }
+  return swaps;
+}
 
 /** Reads a screening conclusion back out of its human-readable reason text. */
 const readSlope = (screening) => {
@@ -73,6 +110,20 @@ export function applyConstraints({ type, screening, baseCoverage }) {
     appliedConstraints.push({ id: 'no-further-reduction', rule: 'No geometry-derived constraint reduced this fraction further.', effect: 'none' });
   }
   return { coverageFraction, appliedConstraints };
+}
+
+/**
+ * True when every plan would end up using the same systems, which collapses the plan comparison into
+ * a single scenario. Used to discard a model selection that makes the two plans indistinguishable.
+ */
+export function selectionsConverge({ plans = PLANS, types = [], choicesByPlan = {} } = {}) {
+  const list = Array.isArray(plans) ? plans : [];
+  const usable = (Array.isArray(types) ? types : []).filter((type) => list.every((plan) => plan.profiles?.[type]));
+  if (usable.length < 1 || list.length < 2) return false;
+  return usable.every((type) => {
+    const resolved = list.map((plan) => choicesByPlan[plan.id]?.[type] ?? plan.profiles[type].id);
+    return resolved.every((id) => id === resolved[0]);
+  });
 }
 
 /** Builds one structured, exportable proposal for a confirmed region under a given system. */
@@ -169,30 +220,45 @@ export function rankProposals(candidates, { limits = DEFAULT_LIMITS, assignedGlo
  * Shaping is per region type (taking the most constrained region of each type), because the viewer
  * overlay and the calculation both read `plan.profiles[type]` — keeping them fed from one object
  * guarantees the displayed coverage equals the calculated coverage. Never mutates the input.
+ *
+ * `systemChoices` is an optional `{ [type]: systemId }` map from an AI service. A choice is honoured
+ * only when the id matches a real catalogue entry for that type, so a bad reply can never introduce
+ * an unknown system. Coverage, cost and carbon remain rule-derived either way.
  */
-export function adjustPlan(plan, regions = []) {
+export function adjustPlan(plan, regions = [], systemChoices = null) {
   if (!plan?.profiles) return plan;
   const list = Array.isArray(regions) ? regions : [];
-  if (!list.length) return plan;
+  const swaps = acceptedSwaps(plan, systemChoices);
+  const base = swaps.size ? { ...plan.profiles } : plan.profiles;
+  for (const [type, profile] of swaps) base[type] = profile;
   const byType = new Map();
   for (const region of list) {
-    if (!region?.type || !plan.profiles[region.type]) continue;
+    if (!region?.type || !base[region.type]) continue;
     const { coverageFraction, appliedConstraints } = applyConstraints({
       type: region.type,
       screening: region.screening,
-      baseCoverage: plan.profiles[region.type].coverageFraction
+      baseCoverage: base[region.type].coverageFraction
     });
     const current = byType.get(region.type);
     if (!current || coverageFraction < current.coverageFraction) byType.set(region.type, { coverageFraction, appliedConstraints });
   }
-  if (!byType.size) return plan;
-  const profiles = { ...plan.profiles };
+  if (!byType.size && !swaps.size) return plan;
+  const profiles = { ...base };
   const appliedConstraints = {};
   for (const [type, value] of byType) {
-    profiles[type] = { ...plan.profiles[type], coverageFraction: value.coverageFraction };
+    profiles[type] = { ...base[type], coverageFraction: value.coverageFraction };
     appliedConstraints[type] = value.appliedConstraints;
   }
-  return { ...plan, profiles, appliedConstraints };
+  const systemSelection = {};
+  for (const [type, profile] of swaps) {
+    systemSelection[type] = {
+      systemId: profile.id,
+      systemName: profile.name,
+      defaultSystemId: plan.profiles[type].id,
+      changed: profile !== plan.profiles[type]
+    };
+  }
+  return { ...plan, profiles, appliedConstraints, systemSelection };
 }
 
 /** Builds proposals for every confirmed region under every plan. */

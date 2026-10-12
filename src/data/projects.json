@@ -41,8 +41,8 @@
     "Kai Tak Innovation Hub"
   ],
   "showcaseProjects": [
-    { "id": "lmc-tower", "name": "LMC Eco Tower", "greenCoveragePct": 48, "image": "/samples/projects/lmc-tower.svg" },
-    { "id": "futian-hub", "name": "Shenzhen Futian Loop Hub", "greenCoveragePct": 35, "image": "/samples/projects/futian-hub.svg" },
-    { "id": "yuen-long", "name": "Yuen Long Plaza", "greenCoveragePct": 55, "image": "/samples/projects/yuen-long.svg" }
+    { "id": "lmc-tower", "name": "LMC Eco Tower", "greenCoveragePct": 48, "image": "/images/projects/lmc-tower.jpg" },
+    { "id": "futian-hub", "name": "Shenzhen Futian Loop Hub", "greenCoveragePct": 35, "image": "/images/projects/futian-hub.jpg" },
+    { "id": "yuen-long", "name": "Yuen Long Plaza", "greenCoveragePct": 55, "image": "/images/projects/yuen-long.jpg" }
   ]
 }

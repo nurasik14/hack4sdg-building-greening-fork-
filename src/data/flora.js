@@ -37,7 +37,7 @@ export const FLORA_SPECIES = [
     bioScore: 4.8,
     summary: 'The city flower. Partial-sun, high biodiversity contribution with showy magenta blooms from late autumn to early spring.',
     tags: ['Native', 'Pollinator', 'Showy bloom'],
-    image: '/samples/flora/bauhinia.svg',
+    image: '/images/flora/bauhinia.jpg',
     maintenance: 'Low — light pruning after flowering',
     watering: 'Moderate; tolerates short dry spells once established',
     matureSize: '6–8 m canopy, suitable for planter trees'
@@ -52,7 +52,7 @@ export const FLORA_SPECIES = [
     bioScore: 4.7,
     summary: 'Shade-tolerant ground cover. Excellent soil-moisture retention and a stable habitat for invertebrates.',
     tags: ['Ground', 'Shade', 'Habitat'],
-    image: '/samples/flora/fern.svg',
+    image: '/images/flora/fern.jpg',
     maintenance: 'Low — remove old fronds once a year',
     watering: 'Consistent moisture; mulch recommended',
     matureSize: '60–90 cm spread'
@@ -67,7 +67,7 @@ export const FLORA_SPECIES = [
     bioScore: 4.3,
     summary: 'Self-clinging climber for full-sun, high-particulate-matter purification. Late-season nectar for pollinators.',
     tags: ['Wall', 'Air quality', 'Pollinator'],
-    image: '/samples/flora/ivy.svg',
+    image: '/images/flora/ivy.jpg',
     maintenance: 'Medium — train and trim twice a year',
     watering: 'Drip irrigation; drought-tolerant once mature',
     matureSize: 'Up to 8 m vertical growth'
@@ -82,7 +82,7 @@ export const FLORA_SPECIES = [
     bioScore: 4.0,
     summary: 'Drought-resistant, low-maintenance mat-forming grass used in the EcoMetro demonstration green-roof trials.',
     tags: ['Rooftop', 'Low water', 'Foot traffic'],
-    image: '/samples/flora/grass.svg',
+    image: '/images/flora/grass.jpg',
     maintenance: 'Low — mow twice per season',
     watering: 'Rain-fed after establishment',
     matureSize: 'Tight 5–8 cm turf mat'

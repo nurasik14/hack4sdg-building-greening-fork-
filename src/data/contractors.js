@@ -24,6 +24,7 @@ export const CONTRACTOR_CATEGORIES = [
 export const CONTRACTORS = [
   {
     id: 'shen-hk-ecodesigns',
+    avatar: '/images/partners/shen-hk-ecodesigns.jpg',
     name: 'Shen-HK EcoDesigns',
     initials: 'SK',
     category: 'architects',
@@ -52,6 +53,7 @@ export const CONTRACTORS = [
   },
   {
     id: 'evergreen-contractors',
+    avatar: '/images/partners/evergreen-contractors.jpg',
     name: 'Evergreen Contractors Co.',
     initials: 'EV',
     category: 'contractors',
@@ -78,6 +80,7 @@ export const CONTRACTORS = [
   },
   {
     id: 'metropolis-biofacades',
+    avatar: '/images/partners/metropolis-biofacades.jpg',
     name: 'Metropolis Bio-Facades Ltd.',
     initials: 'MB',
     category: 'contractors',

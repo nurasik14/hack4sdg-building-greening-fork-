@@ -251,6 +251,10 @@ function wireFlora() {
 // =====================================================================
 // Directory page
 // =====================================================================
+// Partner photo when one is supplied, otherwise the initials badge.
+const avatarMarkup = (partner) => partner.avatar
+  ? `<img src="${escapeHtml(partner.avatar)}" alt="" loading="lazy" />`
+  : escapeHtml(partner.initials);
 const directoryState = { query: '', category: 'all' };
 
 function renderDirectory() {
@@ -269,7 +273,7 @@ function renderDirectory() {
     card.dataset.partnerId = partner.id;
     card.innerHTML = `
       <div class="partner-card__head">
-        <span class="partner-avatar" aria-hidden="true">${escapeHtml(partner.initials)}</span>
+        <span class="partner-avatar" aria-hidden="true">${avatarMarkup(partner)}</span>
         <div>
           <div class="partner-card__name">${escapeHtml(partner.name)}</div>
           <div class="partner-card__meta">
@@ -338,7 +342,7 @@ function renderProfile(id) {
   const grid = $('profile-grid');
   if (!header || !grid) return;
   header.innerHTML = `
-    <span class="profile-header__avatar" aria-hidden="true">${escapeHtml(partner.initials)}</span>
+    <span class="profile-header__avatar" aria-hidden="true">${avatarMarkup(partner)}</span>
     <div>
       <h1 class="profile-header__name" id="profile-title">${escapeHtml(partner.name)}</h1>
       <div class="profile-header__meta">

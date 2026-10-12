@@ -22,19 +22,19 @@
           </a>
           <nav class="top-nav__links" aria-label="Primary">
             <a class="top-nav__link" data-route="dashboard" href="#/dashboard">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+              <img class="nav-icon" src="/icons/dashboard.svg" width="22" height="22" alt="" aria-hidden="true" />
               Dashboard
             </a>
             <a class="top-nav__link" data-route="calculator" href="#/calculator">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0M8 19h8"/></svg>
+              <img class="nav-icon" src="/icons/calculator.svg" width="22" height="22" alt="" aria-hidden="true" />
               Calculator
             </a>
             <a class="top-nav__link" data-route="incentives" href="#/incentives">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M5 7l14 10M5 17l14-10"/></svg>
+              <img class="nav-icon" src="/icons/incentives.svg" width="22" height="22" alt="" aria-hidden="true" />
               Incentives
             </a>
             <a class="top-nav__link" data-route="flora" href="#/flora">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c0-4 2-7 5-8-1 4-3 7-5 8zM12 21c0-4-2-7-5-8 1 4 3 7 5 8zM12 21V11M12 11c0-3 2-5 5-6-1 3-3 5-5 6zM12 11c0-3-2-5-5-6 1 3 3 5 5 6z"/></svg>
+              <img class="nav-icon" src="/icons/flora.svg" width="22" height="22" alt="" aria-hidden="true" />
               Flora
             </a>
             <a class="top-nav__link" data-route="directory" href="#/directory">
@@ -61,89 +61,17 @@
             <div class="view__heading-row">
               <div>
                 <span class="view__eyebrow">Project Workspace</span>
-                <h1 class="view__title" id="project-label">Opening office example…</h1>
+                <h1 class="view__title" id="dashboard-title" data-bind="project.name"></h1>
                 <p class="view__subtitle">Review zone performance, calculate green impact, and manage greening compliance for the Shenzhen–Hong Kong Eco Development Zone.</p>
               </div>
               <div class="view__actions">
                 <span class="badge badge--high-compliance">HIGH COMPLIANCE</span>
-                <button class="btn btn--ghost" data-panel="project-panel" type="button" aria-controls="project-panel" aria-haspopup="dialog" aria-expanded="false">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                  Import IFC
-                </button>
-                <button class="btn btn--primary" data-panel="inspector-panel" type="button" aria-controls="inspector-panel" aria-haspopup="dialog" aria-expanded="false">Find planting locations</button>
               </div>
             </div>
           </div>
 
           <div class="dashboard-grid">
             <div class="dashboard-grid__primary">
-              <div class="card viewer-card">
-                <div class="viewer-card__header">
-                  <div>
-                    <div class="card__title">Building Review · 3D Model</div>
-                    <small class="empty-text">Same IFC workflow as before. Click the model to inspect components and add regions.</small>
-                  </div>
-                  <div class="view__actions">
-                    <button class="btn btn--soft btn--pill" id="fit-model" type="button" disabled>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4M9 9h6v6H9z"/></svg>
-                      Fit
-                    </button>
-                    <button class="btn btn--ghost btn--pill" data-panel="view-panel" type="button" aria-controls="view-panel" aria-expanded="false">View settings</button>
-                  </div>
-                </div>
-                <div class="viewer-card__stage">
-                  <div id="bim-container" class="bim-viewport" tabindex="0" aria-label="Interactive IFC building viewer"></div>
-                  <div id="viewer-empty" class="viewer-empty">
-                    <span class="empty-model-mark" aria-hidden="true">IFC</span>
-                    <h2>Start with your building.</h2>
-                    <p>Open the office example or import a project IFC.</p>
-                    <button id="empty-load-sample" type="button" class="btn btn--accent">Open office model</button>
-                  </div>
-                  <div id="loading-overlay" class="loading-overlay" hidden>
-                    <div class="loading-placeholder" aria-hidden="true"></div>
-                    <p>Preparing building geometry…</p>
-                  </div>
-                  <div id="preview-switch" class="preview-switch" hidden>
-                    <button id="preview-before" type="button" aria-pressed="true">Before</button>
-                    <button id="preview-after" type="button" aria-pressed="false">After</button>
-                    <span id="preview-plan-label">Light-touch planting</span>
-                  </div>
-                  <div class="viewport-status">
-                    <p id="viewer-status" role="status">Preparing 3D viewer…</p>
-                    <span>Left drag: orbit · right drag: pan · scroll: zoom</span>
-                  </div>
-                  <div id="zoom-indicator" class="zoom-indicator" title="100% = the latest fitted model view" hidden>
-                    <span>Zoom</span>
-                    <output id="zoom-percent" aria-label="Model zoom percentage">100%</output>
-                  </div>
-                  <aside id="proposal-legend" class="proposal-legend" aria-label="Planting location selection" hidden>
-                    <div><span class="legend-blue"></span>Recommended <span class="legend-green"></span>Selected</div>
-                    <strong id="proposal-count" role="status">0 selected</strong>
-                    <p>Click building locations to add / remove. Choices stay selected. These colors mark locations, not planting coverage.</p>
-                    <button type="button" class="btn btn--soft" data-panel="inspector-panel" aria-controls="inspector-panel" aria-expanded="false">Review selected locations</button>
-                  </aside>
-                  <nav class="workspace-dock" aria-label="Workspace tools">
-                    <button type="button" data-panel="project-panel" aria-controls="project-panel" aria-haspopup="dialog" aria-expanded="false">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z M4 7.5l8 4.5 8-4.5 M12 12v9" /></svg>
-                      <span>Project</span>
-                    </button>
-                    <button type="button" data-panel="inspector-panel" aria-controls="inspector-panel" aria-haspopup="dialog" aria-expanded="false">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5" /><circle cx="12" cy="12" r="3" /></svg>
-                      <span>Inspect</span>
-                      <span id="selection-dot" class="selection-dot" hidden><span class="sr-only">Component selected</span></span>
-                    </button>
-                    <button type="button" data-panel="comparison" aria-controls="comparison" aria-haspopup="dialog" aria-expanded="false">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-6 M12 20V9 M19 20V4 M3 20h19" /></svg>
-                      <span>Compare</span>
-                    </button>
-                    <button type="button" data-panel="view-panel" aria-controls="view-panel" aria-haspopup="dialog" aria-expanded="false">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16 M4 17h16" /><circle cx="9" cy="7" r="2" /><circle cx="15" cy="17" r="2" /></svg>
-                      <span>View</span>
-                    </button>
-                  </nav>
-                </div>
-              </div>
-
               <div class="card calculator-card" aria-label="Calculate new plot impact">
                 <div class="card__heading">
                   <div>
@@ -156,51 +84,47 @@
                 <div class="form-grid">
                   <label class="field">
                     Plot Location Zone
-                    <select>
-                      <option>Lok Ma Chau Loop / Futian Border Zone</option>
-                      <option>Yuen Long Eco Corridor</option>
-                      <option>Kai Tak Innovation Hub</option>
-                    </select>
+                    <select data-field="plotZones" aria-label="Plot location zone"></select>
                   </label>
                   <label class="field">
                     Plot Area
                     <div style="display:flex;align-items:center;gap:8px;">
-                      <input type="number" value="7200" />
+                      <input type="number" data-field="dimensions.plotAreaSqm" />
                       <span class="field__hint">sq.m</span>
                     </div>
                   </label>
                   <label class="field">
                     Total Floor Area
                     <div style="display:flex;align-items:center;gap:8px;">
-                      <input type="number" value="24500" />
+                      <input type="number" data-field="dimensions.totalFloorAreaSqm" />
                       <span class="field__hint">sq.m</span>
                     </div>
                   </label>
                   <label class="field">
                     Height
                     <div style="display:flex;align-items:center;gap:8px;">
-                      <input type="number" value="85" />
+                      <input type="number" data-field="dimensions.heightM" />
                       <span class="field__hint">m</span>
                     </div>
                   </label>
                   <label class="field">
                     Rooftop Area
                     <div style="display:flex;align-items:center;gap:8px;">
-                      <input type="number" value="1800" />
+                      <input type="number" data-field="dimensions.rooftopAreaSqm" />
                       <span class="field__hint">sq.m</span>
                     </div>
                   </label>
                   <label class="field">
                     Facade Area Eligible for Greenery
                     <div style="display:flex;align-items:center;gap:8px;">
-                      <input type="number" value="4200" />
+                      <input type="number" data-field="dimensions.eligibleFacadeAreaSqm" />
                       <span class="field__hint">sq.m</span>
                     </div>
                   </label>
                 </div>
                 <div class="form-actions">
-                  <button class="btn btn--primary" data-panel="inspector-panel" type="button" aria-controls="inspector-panel">Calculate Green Impact</button>
-                  <button class="btn btn--ghost" type="button">Reset</button>
+                  <a class="btn btn--primary" href="#/calculator">Calculate Green Impact</a>
+                  <button class="btn btn--ghost" type="button" id="reset-plot-form">Reset</button>
                 </div>
               </div>
             </div>
@@ -211,19 +135,19 @@
                 <h3 class="card__title" style="margin-top:6px;margin-bottom:14px;">Workspace tools</h3>
                 <nav class="quick-links">
                   <a href="#/dashboard" data-route="dashboard" aria-current="page">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                    <img class="nav-icon" src="/icons/dashboard.svg" width="22" height="22" alt="" aria-hidden="true" />
                     Dashboard
                   </a>
                   <a href="#/calculator" data-route="calculator">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0M8 19h8"/></svg>
+                    <img class="nav-icon" src="/icons/calculator.svg" width="22" height="22" alt="" aria-hidden="true" />
                     Calculator
                   </a>
                   <a href="#/incentives" data-route="incentives">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7l14 10M5 17l14-10"/></svg>
+                    <img class="nav-icon" src="/icons/incentives.svg" width="22" height="22" alt="" aria-hidden="true" />
                     Incentives
                   </a>
                   <a href="#/flora" data-route="flora">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c0-4 2-7 5-8-1 4-3 7-5 8zM12 21c0-4-2-7-5-8 1 4 3 7 5 8zM12 21V11"/></svg>
+                    <img class="nav-icon" src="/icons/flora.svg" width="22" height="22" alt="" aria-hidden="true" />
                     Flora
                   </a>
                   <a href="#/directory" data-route="directory">
@@ -235,11 +159,11 @@
 
               <div class="card card--accent">
                 <span class="eyebrow">Zone summary</span>
-                <h3 class="card__title" style="margin-top:6px;">Northern Metropolis Zone</h3>
+                <h3 class="card__title" style="margin-top:6px;" data-bind="zone.name"></h3>
                 <div class="zone-summary">
                   <dl>
-                    <dt>Active projects</dt><dd>142</dd>
-                    <dt>Avg. green coverage</dt><dd>34.8%</dd>
+                    <dt>Active projects</dt><dd data-bind="zone.activeProjects"></dd>
+                    <dt>Avg. green coverage</dt><dd data-bind="zone.avgCoverage"></dd>
                     <dt>Compliance status</dt><dd><a href="#/incentives" data-route="incentives">View compliance →</a></dd>
                   </dl>
                 </div>
@@ -255,9 +179,14 @@
               <div>
                 <span class="view__eyebrow">EcoMetroLink</span>
                 <h1 class="view__title" id="calculator-title">Urban Green Generator</h1>
-                <p class="view__subtitle">Lok Ma Chau Loop Plot #4 · Review the 3D eco-model projection, then save or apply the proposed planting scenario for review.</p>
+                <p class="view__subtitle"><span data-bind="project.name"></span> · Review the 3D eco-model projection, then save or apply the proposed planting scenario for review.</p>
               </div>
               <div class="view__actions">
+                <button class="btn btn--ghost" data-panel="project-panel" type="button" aria-controls="project-panel" aria-haspopup="dialog" aria-expanded="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  Import IFC
+                </button>
+                <button class="btn btn--primary" data-panel="inspector-panel" type="button" aria-controls="inspector-panel" aria-haspopup="dialog" aria-expanded="false">Find planting locations</button>
                 <button class="btn btn--soft" type="button">Live Calculator</button>
                 <button class="btn btn--ghost" type="button">Isometric View</button>
               </div>
@@ -265,100 +194,72 @@
           </div>
 
           <div class="calculator-grid">
-            <div class="card calculator-canvas">
+            <div class="card calculator-canvas" aria-label="3D eco-model projection">
               <div class="calculator-canvas__header">
                 <div>
                   <span class="eyebrow">3D Eco-Model Projection</span>
-                  <div class="card__title">Urban Green Generator</div>
+                  <div class="card__title" id="eco-model-name" aria-live="polite">No model loaded</div>
                 </div>
-                <span class="badge badge--accent">Live · Lok Ma Chau Loop #4</span>
+                <div class="view__actions">
+                  <span class="badge badge--accent">Live · <span data-bind="project.shortName"></span></span>
+                  <button class="btn btn--soft btn--pill" id="fit-model" type="button" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4M9 9h6v6H9z"/></svg>
+                    Fit
+                  </button>
+                  <button class="btn btn--ghost btn--pill" data-panel="view-panel" type="button" aria-controls="view-panel" aria-haspopup="dialog" aria-expanded="false">View settings</button>
+                </div>
               </div>
-              <div class="calculator-canvas__stage">
-                <!-- Static illustrative projection of the model with proposed greening. -->
-                <svg viewBox="0 0 800 460" preserveAspectRatio="xMidYMid meet" role="img" aria-label="3D eco-model projection of the building with proposed greening">
-                  <defs>
-                    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0" stop-color="#0f3a2b"/>
-                      <stop offset="1" stop-color="#082019"/>
-                    </linearGradient>
-                    <linearGradient id="building" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0" stop-color="#36514a"/>
-                      <stop offset="1" stop-color="#1d3a30"/>
-                    </linearGradient>
-                    <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0" stop-color="#79c08c"/>
-                      <stop offset="1" stop-color="#2f7b48"/>
-                    </linearGradient>
-                  </defs>
-                  <rect width="800" height="460" fill="url(#bgGrad)"/>
-                  <!-- grid floor -->
-                  <g stroke="rgba(255,255,255,0.08)" stroke-width="0.5">
-                    <line x1="0" y1="380" x2="800" y2="380"/>
-                    <line x1="0" y1="350" x2="800" y2="350"/>
-                    <line x1="0" y1="320" x2="800" y2="320"/>
-                    <line x1="0" y1="290" x2="800" y2="290"/>
-                    <line x1="0" y1="260" x2="800" y2="260"/>
-                    <line x1="100" y1="260" x2="100" y2="380"/>
-                    <line x1="200" y1="260" x2="200" y2="380"/>
-                    <line x1="300" y1="260" x2="300" y2="380"/>
-                    <line x1="400" y1="260" x2="400" y2="380"/>
-                    <line x1="500" y1="260" x2="500" y2="380"/>
-                    <line x1="600" y1="260" x2="600" y2="380"/>
-                    <line x1="700" y1="260" x2="700" y2="380"/>
-                  </g>
-                  <!-- isometric building -->
-                  <g transform="translate(400 380)">
-                    <polygon points="-160,-260 0,-340 160,-260 0,-180" fill="url(#building)" stroke="#0a1f17" stroke-width="1.5"/>
-                    <polygon points="-160,-260 -160,40 0,120 0,-180" fill="#2a443b" stroke="#0a1f17" stroke-width="1.5"/>
-                    <polygon points="0,120 160,40 160,-260 0,-180" fill="#1f352b" stroke="#0a1f17" stroke-width="1.5"/>
-                    <!-- windows -->
-                    <g fill="#7ac0d4" opacity="0.35">
-                      <rect x="-130" y="-200" width="20" height="40"/>
-                      <rect x="-90" y="-180" width="20" height="40"/>
-                      <rect x="-50" y="-160" width="20" height="40"/>
-                      <rect x="-10" y="-140" width="20" height="40"/>
-                      <rect x="30" y="-160" width="20" height="40"/>
-                      <rect x="70" y="-180" width="20" height="40"/>
-                      <rect x="110" y="-200" width="20" height="40"/>
-                    </g>
-                    <!-- green roof -->
-                    <polygon points="-160,-260 0,-340 160,-260 0,-180" fill="url(#roof)" opacity="0.95"/>
-                    <g fill="#a4d99a" opacity="0.85">
-                      <circle cx="-60" cy="-240" r="14"/>
-                      <circle cx="0" cy="-260" r="18"/>
-                      <circle cx="60" cy="-240" r="14"/>
-                      <circle cx="-30" cy="-220" r="10"/>
-                      <circle cx="30" cy="-220" r="10"/>
-                    </g>
-                    <!-- ground greenery -->
-                    <ellipse cx="0" cy="80" rx="280" ry="50" fill="#2f6b3e" opacity="0.55"/>
-                    <g fill="#84c179">
-                      <circle cx="-150" cy="60" r="18"/>
-                      <circle cx="0" cy="80" r="22"/>
-                      <circle cx="150" cy="60" r="18"/>
-                    </g>
-                    <!-- side green wall -->
-                    <g fill="#4a9b5c" opacity="0.85">
-                      <rect x="-160" y="-160" width="6" height="180"/>
-                      <rect x="-148" y="-180" width="6" height="200"/>
-                      <rect x="-136" y="-160" width="6" height="180"/>
-                    </g>
-                    <g fill="#84c179" opacity="0.7">
-                      <circle cx="-156" cy="-140" r="6"/>
-                      <circle cx="-140" cy="-100" r="6"/>
-                      <circle cx="-156" cy="-60" r="6"/>
-                      <circle cx="-140" cy="-20" r="6"/>
-                    </g>
-                  </g>
-                  <!-- glow ring (8.0% rebate visualisation) -->
-                  <g transform="translate(640 100)">
-                    <circle r="56" fill="none" stroke="rgba(15, 157, 88, 0.35)" stroke-width="6"/>
-                    <circle r="56" fill="none" stroke="#0f9d58" stroke-width="6" stroke-dasharray="280 351" transform="rotate(-90)"/>
-                    <text text-anchor="middle" y="-2" fill="#fff" font-family="ui-sans-serif" font-size="14" font-weight="700">64%</text>
-                    <text text-anchor="middle" y="14" fill="rgba(255,255,255,0.7)" font-family="ui-sans-serif" font-size="9" letter-spacing="2">SILVER</text>
-                  </g>
-                </svg>
-              </div>
+              <div class="viewer-card__stage calculator-canvas__stage">
+                        <div id="bim-container" class="bim-viewport" tabindex="0" aria-label="Interactive IFC building viewer"></div>
+                        <div id="viewer-empty" class="viewer-empty">
+                          <span class="empty-model-mark" aria-hidden="true">IFC</span>
+                          <h2>Start with your building.</h2>
+                          <p>Open the office example or import a project IFC.</p>
+                          <button id="empty-load-sample" type="button" class="btn btn--accent">Open office model</button>
+                        </div>
+                        <div id="loading-overlay" class="loading-overlay" hidden>
+                          <div class="loading-placeholder" aria-hidden="true"></div>
+                          <p>Preparing building geometry…</p>
+                        </div>
+                        <div id="preview-switch" class="preview-switch" hidden>
+                          <button id="preview-before" type="button" aria-pressed="true">Before</button>
+                          <button id="preview-after" type="button" aria-pressed="false">After</button>
+                          <span id="preview-plan-label">Light-touch planting</span>
+                        </div>
+                        <div class="viewport-status">
+                          <p id="viewer-status" role="status">Preparing 3D viewer…</p>
+                          <span>Left drag: orbit · right drag: pan · scroll: zoom</span>
+                        </div>
+                        <div id="zoom-indicator" class="zoom-indicator" title="100% = the latest fitted model view" hidden>
+                          <span>Zoom</span>
+                          <output id="zoom-percent" aria-label="Model zoom percentage">100%</output>
+                        </div>
+                        <aside id="proposal-legend" class="proposal-legend" aria-label="Planting location selection" hidden>
+                          <div><span class="legend-blue"></span>Recommended <span class="legend-green"></span>Selected</div>
+                          <strong id="proposal-count" role="status">0 selected</strong>
+                          <p>Click building locations to add / remove. Choices stay selected. These colors mark locations, not planting coverage.</p>
+                          <button type="button" class="btn btn--soft" data-panel="inspector-panel" aria-controls="inspector-panel" aria-expanded="false">Review selected locations</button>
+                        </aside>
+                        <nav class="workspace-dock" aria-label="Workspace tools">
+                          <button type="button" data-panel="project-panel" aria-controls="project-panel" aria-haspopup="dialog" aria-expanded="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z M4 7.5l8 4.5 8-4.5 M12 12v9" /></svg>
+                            <span>Project</span>
+                          </button>
+                          <button type="button" data-panel="inspector-panel" aria-controls="inspector-panel" aria-haspopup="dialog" aria-expanded="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5" /><circle cx="12" cy="12" r="3" /></svg>
+                            <span>Inspect</span>
+                            <span id="selection-dot" class="selection-dot" hidden><span class="sr-only">Component selected</span></span>
+                          </button>
+                          <button type="button" data-panel="comparison" aria-controls="comparison" aria-haspopup="dialog" aria-expanded="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-6 M12 20V9 M19 20V4 M3 20h19" /></svg>
+                            <span>Compare</span>
+                          </button>
+                          <button type="button" data-panel="view-panel" aria-controls="view-panel" aria-haspopup="dialog" aria-expanded="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16 M4 17h16" /><circle cx="9" cy="7" r="2" /><circle cx="15" cy="17" r="2" /></svg>
+                            <span>View</span>
+                          </button>
+                        </nav>
+                      </div>
               <div class="calculator-canvas__actions">
                 <button class="btn btn--ghost" type="button" data-action="save-scenario">Save Scenario</button>
                 <button class="btn btn--primary" type="button" data-action="apply-review">Apply for Review</button>
@@ -368,12 +269,12 @@
             <div class="calculator-side">
               <div class="card">
                 <span class="eyebrow">Project overview</span>
-                <h3 class="card__title" style="margin-top:6px;">Lok Ma Chau Loop Plot #4</h3>
+                <h3 class="card__title" style="margin-top:6px;" data-bind="project.name"></h3>
                 <div class="zone-summary">
                   <dl>
-                    <dt>Green coverage added</dt><dd>34% (2,450 sq.m)</dd>
-                    <dt>Estimated CO₂ reduction</dt><dd>18.6 tonnes/year</dd>
-                    <dt>Government tax tier</dt><dd>Silver Rebate Tier</dd>
+                    <dt>Green coverage added</dt><dd data-bind="impact.coverageFull"></dd>
+                    <dt>Estimated CO₂ reduction</dt><dd data-bind="impact.co2Full"></dd>
+                    <dt>Government tax tier</dt><dd data-bind="incentive.tierLabel"></dd>
                   </dl>
                 </div>
               </div>
@@ -383,7 +284,7 @@
                 </div>
                 <div>
                   <div class="metric-tile__label">Green coverage added</div>
-                  <div class="metric-tile__value">34% <span class="stat__unit">(2,450 sq.m)</span></div>
+                  <div class="metric-tile__value"><span data-bind="impact.coveragePct"></span> <span class="stat__unit" data-bind="impact.coverageSqmParen"></span></div>
                 </div>
               </div>
               <div class="metric-tile">
@@ -392,7 +293,7 @@
                 </div>
                 <div>
                   <div class="metric-tile__label">Estimated CO₂ reduction</div>
-                  <div class="metric-tile__value">18.6 <span class="stat__unit">tonnes/year</span></div>
+                  <div class="metric-tile__value"><span data-bind="impact.co2"></span> <span class="stat__unit">tonnes/year</span></div>
                 </div>
               </div>
               <div class="metric-tile">
@@ -401,8 +302,8 @@
                 </div>
                 <div>
                   <div class="metric-tile__label">Government tax incentive tier</div>
-                  <div class="metric-tile__value">Silver Rebate Tier</div>
-                  <small>Equivalent to 8% corporate income tax rebate.</small>
+                  <div class="metric-tile__value" data-bind="incentive.tierLabel"></div>
+                  <small>Equivalent to <span data-bind="incentive.rebatePct"></span> corporate income tax rebate.</small>
                 </div>
               </div>
               <div class="card">
@@ -428,7 +329,7 @@
                 <p class="view__subtitle">Northern Metropolis Compliance Panel · Track rebate progress, certified compliance authorities, and the milestone checklist required to reach the next tier.</p>
               </div>
               <div class="view__actions">
-                <span class="badge badge--outline">Reg #MI-2026-08A</span>
+                <span class="badge badge--outline">Reg #<span data-bind="incentive.registration"></span></span>
                 <button class="btn btn--primary" type="button">Contact Compliance Team</button>
               </div>
             </div>
@@ -440,19 +341,19 @@
                 <h3>Navigation</h3>
                 <div class="nav-card__links">
                   <a class="nav-card__link" href="#/dashboard" data-route="dashboard">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                    <img class="nav-icon" src="/icons/dashboard.svg" width="22" height="22" alt="" aria-hidden="true" />
                     Dashboard
                   </a>
                   <a class="nav-card__link" href="#/calculator" data-route="calculator">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0M8 19h8"/></svg>
+                    <img class="nav-icon" src="/icons/calculator.svg" width="22" height="22" alt="" aria-hidden="true" />
                     Calculator
                   </a>
                   <a class="nav-card__link" href="#/incentives" data-route="incentives" aria-current="page">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M5 7l14 10M5 17l14-10"/></svg>
+                    <img class="nav-icon" src="/icons/incentives.svg" width="22" height="22" alt="" aria-hidden="true" />
                     Incentives
                   </a>
                   <a class="nav-card__link" href="#/flora" data-route="flora">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21V11M12 11c0-3 2-5 5-6-1 3-3 5-5 6zM12 11c0-3-2-5-5-6 1 3 3 5 5 6z"/></svg>
+                    <img class="nav-icon" src="/icons/flora.svg" width="22" height="22" alt="" aria-hidden="true" />
                     Flora
                   </a>
                   <a class="nav-card__link" href="#/directory" data-route="directory">
@@ -462,7 +363,7 @@
                 </div>
                 <div class="nav-card__status">
                   <strong>Compliance status</strong>
-                  3 of 4 milestones are complete. Finalise native species submittal to reach the 12% Gold Tier rebate.
+                  <span data-bind="incentive.statusText"></span>
                 </div>
               </div>
             </aside>
@@ -472,17 +373,17 @@
                 <div class="rebate-card">
                   <div>
                     <div class="rebate-card__label">Current rebate rate</div>
-                    <div class="rebate-card__value">8.0% Discount</div>
+                    <div class="rebate-card__value" data-bind="incentive.rebateDiscount"></div>
                     <div class="rebate-card__sub">Corporate income tax rebate on Plot #4</div>
                   </div>
-                  <div class="rebate-card__ring"><span>Silver</span></div>
+                  <div class="rebate-card__ring"><span data-bind="incentive.tier"></span></div>
                 </div>
                 <div class="progress">
                   <div class="progress__label">
-                    <span>Progress to Gold Tier (12% rebate)</span>
-                    <span>3 / 4 met</span>
+                    <span data-bind="incentive.progressLabel"></span>
+                    <span data-bind="incentive.milestonesMet"></span>
                   </div>
-                  <div class="progress__bar"><span class="progress__fill" style="width: 75%;"></span></div>
+                  <div class="progress__bar"><span class="progress__fill" data-bind-width="incentive.progressPct"></span></div>
                 </div>
               </div>
 

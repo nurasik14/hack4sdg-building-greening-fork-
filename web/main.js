@@ -5,7 +5,8 @@
 
 import { calculatePlan, PLANS, REGION_TYPES } from '../src/domain/greening-plan.js';
 import { filterFlora } from '../src/data/flora.js';
-import { CONTRACTORS, findContractor, filterContractors } from '../src/data/contractors.js';
+import { CONTRACTORS, findContractor, filterContractors, resolvePastProject } from '../src/data/contractors.js';
+import projectData from '../src/data/projects.json' with { type: 'json' };
 
 const $ = (id) => document.getElementById(id);
 
@@ -44,10 +45,77 @@ const number = (value) => Math.round(value).toLocaleString('en-HK');
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 
 // =====================================================================
+// Project data (src/data/projects.json) → DOM bindings
+// =====================================================================
+const activeProject = projectData.projects.find((project) => project.id === projectData.activeProjectId) ?? projectData.projects[0];
+
+function lookup(object, path) {
+  return path.split('.').reduce((value, key) => value?.[key], object);
+}
+
+function projectBindings() {
+  const { zone } = projectData;
+  const { impact, incentive } = activeProject;
+  const sqm = `${number(impact.greenCoverageAddedSqm)} sq.m`;
+  return {
+    'project.name': activeProject.name,
+    'project.shortName': activeProject.shortName,
+    'zone.name': zone.name,
+    'zone.activeProjects': String(zone.activeProjects),
+    'zone.avgCoverage': `${zone.averageGreenCoveragePct}%`,
+    'impact.coveragePct': `${impact.greenCoverageAddedPct}%`,
+    'impact.coverageSqmParen': `(${sqm})`,
+    'impact.coverageFull': `${impact.greenCoverageAddedPct}% (${sqm})`,
+    'impact.co2': String(impact.co2ReductionTonnesPerYear),
+    'impact.co2Full': `${impact.co2ReductionTonnesPerYear} tonnes/year`,
+    'incentive.tier': incentive.tier,
+    'incentive.tierLabel': incentive.tierLabel,
+    'incentive.rebatePct': `${incentive.rebatePct}%`,
+    'incentive.rebateDiscount': `${incentive.rebatePct.toFixed(1)}% Discount`,
+    'incentive.registration': incentive.registration,
+    'incentive.progressLabel': `Progress to ${incentive.nextTier} Tier (${incentive.nextTierRebatePct}% rebate)`,
+    'incentive.milestonesMet': `${incentive.milestonesMet} / ${incentive.milestonesTotal} met`,
+    'incentive.progressPct': `${Math.round((incentive.milestonesMet / incentive.milestonesTotal) * 100)}%`,
+    'incentive.statusText': `${incentive.milestonesMet} of ${incentive.milestonesTotal} milestones are complete. Finalise native species submittal to reach the ${incentive.nextTierRebatePct}% ${incentive.nextTier} Tier rebate.`
+  };
+}
+
+function fillPlotForm() {
+  for (const input of document.querySelectorAll('[data-field^="dimensions."]')) {
+    input.value = lookup(activeProject, input.dataset.field) ?? '';
+  }
+  const zoneSelect = document.querySelector('[data-field="plotZones"]');
+  if (zoneSelect) {
+    zoneSelect.replaceChildren(...projectData.plotZones.map((name) => {
+      const option = document.createElement('option');
+      option.textContent = name;
+      option.selected = name === activeProject.zone;
+      return option;
+    }));
+  }
+}
+
+function bindProjectData() {
+  const values = projectBindings();
+  for (const element of document.querySelectorAll('[data-bind]')) {
+    const value = values[element.dataset.bind];
+    if (value !== undefined) element.textContent = value;
+  }
+  for (const element of document.querySelectorAll('[data-bind-width]')) {
+    const value = values[element.dataset.bindWidth];
+    if (value !== undefined) element.style.width = value;
+  }
+  fillPlotForm();
+}
+bindProjectData();
+$('reset-plot-form')?.addEventListener('click', fillPlotForm);
+
+// =====================================================================
 // Routing — light hash router
 // =====================================================================
 const ROUTES = ['dashboard', 'calculator', 'incentives', 'flora', 'directory', 'profile'];
 const KNOWN_ROUTES = new Set(ROUTES);
+const VIEWER_ROUTE = 'calculator';
 
 function parseRoute() {
   const raw = (location.hash || '').replace(/^#\/?/, '').trim();
@@ -87,16 +155,16 @@ function renderRoute() {
   if (name === 'flora') renderFlora();
   if (name === 'directory') renderDirectory();
   if (name === 'profile') renderProfile(params.id);
-  // Mount the 3D viewer on demand. It stays attached to the dashboard;
-  // the surrounding view is hidden when navigating away, so the renderer
-  // is no longer visible. Pause/resume keep the GPU cost down.
-  if (name === 'dashboard') {
-    mountViewer();
-    if (viewer?.resume) viewer.resume();
+  // The 3D eco-model lives in the Calculator view. Its host is display:none while another
+  // view is active (container collapses to 0x0), so pause rendering when leaving and, on
+  // return, resume + re-measure the canvas instead of leaving a stale/frozen renderer.
+  if (name === VIEWER_ROUTE) {
+    if (viewer) viewer.resume();
+    else void mountViewer();
   } else {
-    if (viewer?.pause) viewer.pause();
+    viewer?.pause();
   }
-  if (name !== 'dashboard') {
+  if (name !== VIEWER_ROUTE) {
     for (const panel of workspacePanels) if (panel.open) closePanel(panel, { restoreFocus: false });
   }
   const active = document.querySelector(`.view[data-view="${name}"]`);
@@ -279,7 +347,6 @@ function renderProfile(id) {
         <span class="star">★ ${partner.rating.toFixed(1)} (${partner.reviews} Reviews)</span>
       </div>
     </div>`;
-  const projectImages = ['lmc-tower', 'futian-hub', 'yuen-long'];
   grid.innerHTML = `
     <div class="profile-main">
       <section class="section-card">
@@ -293,9 +360,9 @@ function renderProfile(id) {
       <section class="section-card">
         <h3>Past Sustainable Projects</h3>
         <div class="projects-grid">
-          ${partner.pastProjects.map((project, i) => `
+          ${partner.pastProjects.map(resolvePastProject).map((project, i) => `
             <div class="project-thumb">
-              <img src="/samples/projects/${projectImages[i % projectImages.length]}.svg" alt="${escapeHtml(project.name)} preview" loading="lazy" />
+              <img src="${escapeHtml(project.image ?? projectData.showcaseProjects[i % projectData.showcaseProjects.length].image)}" alt="${escapeHtml(project.name)} preview" loading="lazy" />
               <div class="project-thumb__caption">
                 <strong>${escapeHtml(project.name)}</strong>
                 <small>${escapeHtml(project.coverage)}</small>
@@ -800,6 +867,14 @@ function showSelection(selection) {
   if (recommendationVersion !== selection.modelVersion) openPanel('inspector-panel', { focus: false });
 }
 
+// Name of the active IFC sample (or imported file) shown under "3D Eco-Model Projection".
+function modelDisplayName(model) {
+  if (!model) return 'No model loaded';
+  const key = Object.keys(samples).find((id) => samples[id].name === model.fileName);
+  const label = key ? $('sample-model').querySelector(`option[value="${key}"]`)?.textContent : null;
+  return label ?? model.fileName;
+}
+
 function refreshImportControls() {
   $('ifc-file').disabled = importing || !viewer;
   $('load-sample').disabled = importing || !viewer;
@@ -895,6 +970,8 @@ async function mountViewer() {
   if (viewerMounted || !$('bim-container')) return;
   viewerMounted = true;
   try {
+    // Re-initialisation after a failed/disposed instance must start from a clean container.
+    $('bim-container').replaceChildren();
     const { createBimViewer } = await import('../src/adapters/bim-viewer.js');
     viewer = await createBimViewer($('bim-container'), {
       onSelection: showSelection,
@@ -911,7 +988,7 @@ async function mountViewer() {
         $('assistant-candidates').replaceChildren();
         $('assistant-answer').textContent = 'Find candidates for the current model. Nothing is added automatically.';
         loadedModel = model;
-        $('project-label').textContent = model?.fileName ?? 'Start a building review';
+        $('eco-model-name').textContent = modelDisplayName(model);
         $('model-status-label').textContent = model ? `${model.componentCount.toLocaleString()} components` : 'Ready to import';
         $('viewer-badge').textContent = model ? (model.sourceFormat === 'frag' ? 'Fragments · IFC-derived' : 'IFC geometry') : 'No model loaded';
         $('inventory-total').textContent = model ? model.componentCount.toLocaleString() : '—';
@@ -934,10 +1011,13 @@ async function mountViewer() {
         refreshImportControls();
       }
     });
+    if (parseRoute().name !== VIEWER_ROUTE) viewer.pause(); // user navigated away while it was initialising
     showStatus('3D viewer ready. Select an IFC file or load the building sample.');
     refreshImportControls();
     void loadSample();
   } catch (error) {
+    viewer = undefined;
+    viewerMounted = false; // allow a retry the next time the Calculator view is opened
     showStatus(`Could not initialize the 3D viewer: ${error.message}`);
   }
 }

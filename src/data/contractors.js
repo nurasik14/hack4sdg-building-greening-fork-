@@ -2,6 +2,18 @@
 // Each entry matches the desktop "Eco Partner Network" card and the partner
 // profile page that opens when a card is activated.
 
+import projectData from './projects.json' with { type: 'json' };
+
+const showcaseById = new Map(projectData.showcaseProjects.map((project) => [project.id, project]));
+
+// Resolve a past-project reference into display fields. Showcase projects (shared
+// numbers + images) come from projects.json; other entries stay inline.
+export function resolvePastProject(entry) {
+  const showcase = entry.projectId ? showcaseById.get(entry.projectId) : null;
+  if (!showcase) return { name: entry.name, coverage: entry.coverage, image: entry.image ?? null };
+  return { name: showcase.name, coverage: `${showcase.greenCoveragePct}% Green`, image: showcase.image };
+}
+
 export const CONTRACTOR_CATEGORIES = [
   { id: 'all', label: 'All' },
   { id: 'architects', label: 'Architects' },
@@ -15,7 +27,7 @@ export const CONTRACTORS = [
     name: 'Shen-HK EcoDesigns',
     initials: 'SK',
     category: 'architects',
-    status: '5-Grade',
+    status: 'S-rank',
     certification: 'EC-HK Approved',
     rating: 4.9,
     reviews: 118,
@@ -29,9 +41,9 @@ export const CONTRACTORS = [
       'Greywater Integration'
     ],
     pastProjects: [
-      { name: 'LMC Eco Tower', coverage: '48% Green' },
-      { name: 'Shenzhen Futian Loop Hub', coverage: '35% Green' },
-      { name: 'Yuen Long Plaza', coverage: '55% Green' }
+      { projectId: 'lmc-tower' },
+      { projectId: 'futian-hub' },
+      { projectId: 'yuen-long' }
     ],
     certifications: [
       'HK Building Department RGBC License',

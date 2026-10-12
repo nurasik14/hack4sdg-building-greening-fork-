@@ -1,0 +1,48 @@
+{
+  "activeProjectId": "lok-ma-chau-loop-4",
+  "zone": {
+    "name": "Northern Metropolis Zone",
+    "activeProjects": 142,
+    "averageGreenCoveragePct": 34.8
+  },
+  "projects": [
+    {
+      "id": "lok-ma-chau-loop-4",
+      "name": "Lok Ma Chau Loop Plot #4",
+      "shortName": "Lok Ma Chau Loop #4",
+      "zone": "Lok Ma Chau Loop / Futian Border Zone",
+      "dimensions": {
+        "plotAreaSqm": 7200,
+        "totalFloorAreaSqm": 24500,
+        "heightM": 85,
+        "rooftopAreaSqm": 1800,
+        "eligibleFacadeAreaSqm": 4200
+      },
+      "impact": {
+        "greenCoverageAddedPct": 34,
+        "greenCoverageAddedSqm": 2450,
+        "co2ReductionTonnesPerYear": 18.6
+      },
+      "incentive": {
+        "tier": "Silver",
+        "tierLabel": "Silver Rebate Tier",
+        "rebatePct": 8,
+        "nextTier": "Gold",
+        "nextTierRebatePct": 12,
+        "milestonesMet": 3,
+        "milestonesTotal": 4,
+        "registration": "MI-2026-08A"
+      }
+    }
+  ],
+  "plotZones": [
+    "Lok Ma Chau Loop / Futian Border Zone",
+    "Yuen Long Eco Corridor",
+    "Kai Tak Innovation Hub"
+  ],
+  "showcaseProjects": [
+    { "id": "lmc-tower", "name": "LMC Eco Tower", "greenCoveragePct": 48, "image": "/samples/projects/lmc-tower.svg" },
+    { "id": "futian-hub", "name": "Shenzhen Futian Loop Hub", "greenCoveragePct": 35, "image": "/samples/projects/futian-hub.svg" },
+    { "id": "yuen-long", "name": "Yuen Long Plaza", "greenCoveragePct": 55, "image": "/samples/projects/yuen-long.svg" }
+  ]
+}

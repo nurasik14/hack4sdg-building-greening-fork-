@@ -360,7 +360,39 @@ export async function createBimViewer(container, { onSelection, onStatus, onMode
       return proposalQueue;
     }
 
+    // Lifecycle: the host view is hidden with display:none when the user navigates away, which
+    // collapses the container to 0x0. Keep the renderer, camera aspect and post-processing passes
+    // in sync with the real container size, and stop rendering while the view is hidden.
+    let disposed = false;
+    function syncSize() {
+      if (disposed) return;
+      const { clientWidth, clientHeight } = container;
+      if (!clientWidth || !clientHeight) return; // hidden: keep the last good size
+      world.renderer.resize();
+      world.camera.updateAspect();
+      postproduction.updateCamera();
+      world.renderer.needsUpdate = true;
+      fragments.core.update(true);
+    }
+    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(syncSize) : null;
+    resizeObserver?.observe(container);
+    const canvas = world.renderer.three.domElement;
+    const onContextLost = (event) => { event.preventDefault(); onStatus('3D view paused: graphics context was lost. Restoring…'); };
+    const onContextRestored = () => { syncSize(); onStatus('3D view restored.'); };
+    canvas.addEventListener('webglcontextlost', onContextLost);
+    canvas.addEventListener('webglcontextrestored', onContextRestored);
+
     return {
+      /** Stop rendering while the host view is hidden. */
+      pause() { if (!disposed) world.renderer.enabled = false; },
+      /** Resume after the host view is shown again; always re-measures the container. */
+      resume() {
+        if (disposed) return;
+        world.renderer.enabled = true;
+        // Wait one frame so the freshly un-hidden container has been laid out.
+        requestAnimationFrame(() => { syncSize(); void controls.update?.(0); });
+      },
+      resize: syncSize,
       openIfc: (file) => openFile(file, 'ifc'),
       openFragments: (file) => openFile(file, 'frag'),
       setView,
@@ -423,6 +455,10 @@ export async function createBimViewer(container, { onSelection, onStatus, onMode
         finally { programmaticSelection--; }
       },
       async dispose() {
+        disposed = true;
+        resizeObserver?.disconnect();
+        canvas.removeEventListener('webglcontextlost', onContextLost);
+        canvas.removeEventListener('webglcontextrestored', onContextRestored);
         controls.removeEventListener('update', updateCamera);
         selectionEpoch++;
         resetRegions();

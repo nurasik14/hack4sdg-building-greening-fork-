@@ -31,7 +31,37 @@
         "nextTierRebatePct": 12,
         "milestonesMet": 3,
         "milestonesTotal": 4,
-        "registration": "MI-2026-08A"
+        "registration": "MI-2026-08A",
+        "authorities": [
+          "HK Dev Bureau Partnership",
+          "Shenzhen Municipal Gov"
+        ],
+        "milestones": [
+          {
+            "title": "30% Green Coverage Verified",
+            "description": "Roof completes on Jan 14, 2026",
+            "meta": "Verified by HK Dev Bureau",
+            "done": true
+          },
+          {
+            "title": "Greywater Recycling Pipeline",
+            "description": "Inspected & linked to Lok Ma Chau main",
+            "meta": "Inspector: SZ Eco-Env Bureau",
+            "done": true
+          },
+          {
+            "title": "Biodiversity Survey Submitted",
+            "description": "Pending contractor species submittal",
+            "meta": "Due: 12 March 2026",
+            "done": true
+          },
+          {
+            "title": "Native Species Percentage (>50%)",
+            "description": "Pending contractor species submittal",
+            "meta": "Final step",
+            "done": false
+          }
+        ]
       }
     }
   ],

@@ -543,7 +543,7 @@ main.app-main { flex: 1; }
 .message-launcher:hover { background: var(--color-primary-700); }
 .message-launcher img { filter: brightness(0) invert(1); }
 
-.messaging-modal { display: flex; align-items: flex-end; justify-content: flex-end; }
+.messaging-modal[open] { display: flex; align-items: flex-end; justify-content: flex-end; }
 .messaging-modal__sheet {
   width: min(920px, calc(100% - 30px));
   height: min(620px, calc(100dvh - 36px));

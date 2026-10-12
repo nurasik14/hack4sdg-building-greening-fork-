@@ -75,7 +75,7 @@
               <div class="card calculator-card" aria-label="Calculate new plot impact">
                 <div class="card__heading">
                   <div>
-                    <span class="eyebrow">Northern Metropolis Zone</span>
+                    <span class="eyebrow" data-bind="zone.name"></span>
                     <div class="card__title">Calculate New Plot Impact</div>
                   </div>
                   <span class="badge badge--accent">3D ECO-MODEL READY</span>
@@ -374,7 +374,7 @@
                   <div>
                     <div class="rebate-card__label">Current rebate rate</div>
                     <div class="rebate-card__value" data-bind="incentive.rebateDiscount"></div>
-                    <div class="rebate-card__sub">Corporate income tax rebate on Plot #4</div>
+                    <div class="rebate-card__sub">Corporate income tax rebate on <span data-bind="project.shortName"></span></div>
                   </div>
                   <div class="rebate-card__ring"><span data-bind="incentive.tier"></span></div>
                 </div>
@@ -389,54 +389,12 @@
 
               <div class="incentive-list">
                 <h3>Certified compliance authorities</h3>
-                <ul>
-                  <li>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg>
-                    HK Dev Bureau Partnership
-                  </li>
-                  <li>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg>
-                    Shenzhen Municipal Gov
-                  </li>
-                </ul>
+                <ul id="incentive-authorities-list"></ul>
               </div>
 
               <div class="incentive-list">
                 <h3>Milestone checklist</h3>
-                <div class="milestone-list">
-                  <div class="milestone milestone--done">
-                    <span class="milestone__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="5 12 10 17 19 7"/></svg></span>
-                    <div>
-                      <strong>30% Green Coverage Verified</strong>
-                      <small>Roof completes on Jan 14, 2026</small>
-                    </div>
-                    <span class="milestone__meta">Verified by HK Dev Bureau</span>
-                  </div>
-                  <div class="milestone milestone--done">
-                    <span class="milestone__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="5 12 10 17 19 7"/></svg></span>
-                    <div>
-                      <strong>Greywater Recycling Pipeline</strong>
-                      <small>Inspected & linked to Lok Ma Chau main</small>
-                    </div>
-                    <span class="milestone__meta">Inspector: SZ Eco-Env Bureau</span>
-                  </div>
-                  <div class="milestone milestone--done">
-                    <span class="milestone__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="5 12 10 17 19 7"/></svg></span>
-                    <div>
-                      <strong>Biodiversity Survey Submitted</strong>
-                      <small>Pending contractor species submittal</small>
-                    </div>
-                    <span class="milestone__meta">Due: 12 March 2026</span>
-                  </div>
-                  <div class="milestone milestone--pending">
-                    <span class="milestone__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg></span>
-                    <div>
-                      <strong>Native Species Percentage (&gt;50%)</strong>
-                      <small>Pending contractor species submittal</small>
-                    </div>
-                    <span class="milestone__meta">Final step</span>
-                  </div>
-                </div>
+                <div class="milestone-list" id="incentive-milestone-list"></div>
               </div>
             </div>
           </div>
@@ -454,8 +412,8 @@
                 <a class="btn btn--ghost" href="/samples/flora/flora-guide.pdf" download>Download Guide</a>
               </div>
             </div>
-            <div class="flora-hero__image">
-              <img src="/images/flora/bauhinia.jpg" alt="Hong Kong Bauhinia illustration" />
+            <div class="flora-hero__image" id="flora-hero-image-wrap">
+              <img id="flora-hero-image" src="/images/flora/bauhinia.jpg" alt="Hong Kong Bauhinia illustration" />
             </div>
           </div>
 
@@ -477,7 +435,7 @@
             <div class="card card--light">
               <div class="stat">
                 <small>Installation types</small>
-                <strong>3</strong>
+                <strong id="flora-stat-installations">0</strong>
                 <span class="empty-text">Rooftop, wall, and ground options.</span>
               </div>
             </div>
@@ -488,18 +446,8 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
               <input id="flora-search-input" type="search" placeholder="Search compatible regional flora…" aria-label="Search flora" />
             </div>
-            <div class="filter-pills" id="flora-installation-pills" role="tablist" aria-label="Installation type filter">
-              <button type="button" data-installation="all" aria-pressed="true">All</button>
-              <button type="button" data-installation="rooftop" aria-pressed="false">Rooftop</button>
-              <button type="button" data-installation="wall" aria-pressed="false">Wall</button>
-              <button type="button" data-installation="ground" aria-pressed="false">Ground</button>
-            </div>
-            <div class="filter-pills" id="flora-focus-pills" role="tablist" aria-label="Biodiversity focus filter">
-              <button type="button" data-focus="all" aria-pressed="true">All focus</button>
-              <button type="button" data-focus="native" aria-pressed="false">Native</button>
-              <button type="button" data-focus="pollinator" aria-pressed="false">Pollinator</button>
-              <button type="button" data-focus="edible" aria-pressed="false">Edible</button>
-            </div>
+            <div class="filter-pills" id="flora-installation-pills" role="tablist" aria-label="Installation type filter"></div>
+            <div class="filter-pills" id="flora-focus-pills" role="tablist" aria-label="Biodiversity focus filter"></div>
           </div>
 
           <div class="flora-grid" id="flora-grid" aria-live="polite"></div>
@@ -527,12 +475,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
               <input id="directory-search-input" type="search" placeholder="Search partners by specialty or zone…" aria-label="Search partners" />
             </div>
-            <div class="filter-pills" id="directory-category-pills" role="tablist" aria-label="Category filter">
-              <button type="button" data-category="all" aria-pressed="true">All</button>
-              <button type="button" data-category="architects" aria-pressed="false">Architects</button>
-              <button type="button" data-category="contractors" aria-pressed="false">Contractors</button>
-              <button type="button" data-category="consultants" aria-pressed="false">Consultants</button>
-            </div>
+            <div class="filter-pills" id="directory-category-pills" role="tablist" aria-label="Category filter"></div>
           </div>
 
           <div class="directory-grid" id="directory-grid" aria-live="polite"></div>
@@ -725,6 +668,57 @@
               <label class="grid-option"><input id="show-grid" type="checkbox" checked />Show ground grid</label>
             </div>
             <p class="empty-text" style="margin-top: 16px;">Left drag to orbit. Right drag to pan. Scroll to zoom towards the cursor. Roof view changes the camera only.</p>
+          </div>
+        </dialog>
+
+        <dialog id="consultation-modal" class="consultation-modal" aria-labelledby="consultation-title">
+          <form method="dialog" class="consultation-modal__sheet" id="consultation-form">
+            <div class="consultation-modal__head">
+              <div>
+                <p class="eyebrow">Directory Consultation</p>
+                <h2 id="consultation-title">Request Consultation</h2>
+              </div>
+              <button class="close-panel" type="button" data-close-consultation aria-label="Close consultation form">×</button>
+            </div>
+            <p class="empty-text" id="consultation-target-label"></p>
+            <label class="field">
+              Message
+              <textarea id="consultation-message" rows="5" placeholder="Write your consultation request and preferred scope/timeline…"></textarea>
+            </label>
+            <div class="consultation-modal__actions">
+              <button class="btn btn--ghost" type="button" data-close-consultation>Cancel</button>
+              <button class="btn btn--primary" type="submit">Send &amp; Open Messaging</button>
+            </div>
+          </form>
+        </dialog>
+
+        <button class="message-launcher" id="message-launcher" type="button" aria-haspopup="dialog" aria-controls="messaging-modal" aria-label="Open messaging">
+          <img src="/icons/message.svg" width="20" height="20" alt="" aria-hidden="true" />
+        </button>
+
+        <dialog id="messaging-modal" class="messaging-modal" aria-labelledby="messaging-title">
+          <div class="messaging-modal__sheet">
+            <header class="messaging-modal__head">
+              <h2 id="messaging-title">Messages</h2>
+              <button class="close-panel" id="messaging-close" type="button" aria-label="Close messaging">×</button>
+            </header>
+            <div class="messaging-modal__content">
+              <aside class="messaging-sidebar">
+                <p class="eyebrow">Contacts</p>
+                <div class="messaging-contact-list" id="messaging-contact-list"></div>
+              </aside>
+              <section class="messaging-chat">
+                <div class="messaging-chat__header">
+                  <strong id="messaging-chat-name"></strong>
+                  <span class="badge badge--green">Verified</span>
+                </div>
+                <div class="messaging-thread" id="messaging-thread"></div>
+                <form class="messaging-composer" id="messaging-composer">
+                  <input id="messaging-input" type="text" placeholder="Write a message…" />
+                  <button class="btn btn--primary" type="submit">Send</button>
+                </form>
+              </section>
+            </div>
           </div>
         </dialog>
       </main>

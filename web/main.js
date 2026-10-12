@@ -4,8 +4,8 @@
 // Directory and a partner Profile page (hash routing).
 
 import { calculatePlan, PLANS, REGION_TYPES } from '../src/domain/greening-plan.js';
-import { filterFlora } from '../src/data/flora.js';
-import { CONTRACTORS, findContractor, filterContractors, resolvePastProject } from '../src/data/contractors.js';
+import { FEATURED_SPECIES_ID, FLORA_FOCUSES, FLORA_INSTALLATIONS, FLORA_SPECIES, filterFlora, findFloraSpecies } from '../src/data/flora.js';
+import { CONTRACTOR_CATEGORIES, CONTRACTORS, findContractor, filterContractors, resolvePastProject } from '../src/data/contractors.js';
 import projectData from '../src/data/projects.json' with { type: 'json' };
 
 const $ = (id) => document.getElementById(id);
@@ -48,6 +48,7 @@ const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => (
 // Project data (src/data/projects.json) → DOM bindings
 // =====================================================================
 const activeProject = projectData.projects.find((project) => project.id === projectData.activeProjectId) ?? projectData.projects[0];
+const incentiveData = activeProject.incentive;
 
 function lookup(object, path) {
   return path.split('.').reduce((value, key) => value?.[key], object);
@@ -95,6 +96,36 @@ function fillPlotForm() {
   }
 }
 
+function renderIncentiveData() {
+  const authorities = $('incentive-authorities-list');
+  const milestones = $('incentive-milestone-list');
+  if (!authorities || !milestones) return;
+  authorities.replaceChildren();
+  milestones.replaceChildren();
+  for (const authority of incentiveData.authorities ?? []) {
+    const item = document.createElement('li');
+    item.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg>';
+    item.append(document.createTextNode(authority));
+    authorities.append(item);
+  }
+  for (const milestone of incentiveData.milestones ?? []) {
+    const row = document.createElement('div');
+    row.className = `milestone ${milestone.done ? 'milestone--done' : 'milestone--pending'}`;
+    row.innerHTML = `
+      <span class="milestone__check">${
+        milestone.done
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="5 12 10 17 19 7"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg>'
+      }</span>
+      <div>
+        <strong>${escapeHtml(milestone.title)}</strong>
+        <small>${escapeHtml(milestone.description)}</small>
+      </div>
+      <span class="milestone__meta">${escapeHtml(milestone.meta)}</span>`;
+    milestones.append(row);
+  }
+}
+
 function bindProjectData() {
   const values = projectBindings();
   for (const element of document.querySelectorAll('[data-bind]')) {
@@ -106,6 +137,7 @@ function bindProjectData() {
     if (value !== undefined) element.style.width = value;
   }
   fillPlotForm();
+  renderIncentiveData();
 }
 bindProjectData();
 $('reset-plot-form')?.addEventListener('click', fillPlotForm);
@@ -176,19 +208,71 @@ window.addEventListener('hashchange', renderRoute);
 // =====================================================================
 // Flora page
 // =====================================================================
-const floraState = { query: '', installation: 'all', focus: 'all' };
+const floraState = { query: '', installation: 'all', focus: 'all', selectedId: FEATURED_SPECIES_ID ?? FLORA_SPECIES[0]?.id ?? null };
+
+function selectedFloraSpecies() {
+  return findFloraSpecies(floraState.selectedId) ?? FLORA_SPECIES[0] ?? null;
+}
+
+function renderFloraHero() {
+  const featured = selectedFloraSpecies();
+  const image = $('flora-hero-image');
+  if (!featured || !image) return;
+  image.src = featured.image;
+  image.alt = `${featured.name} illustration`;
+}
+
+function renderFloraFilters() {
+  const installationPills = $('flora-installation-pills');
+  const focusPills = $('flora-focus-pills');
+  if (!installationPills || !focusPills) return;
+  installationPills.replaceChildren();
+  focusPills.replaceChildren();
+  for (const installation of [{ id: 'all', label: 'All' }, ...FLORA_INSTALLATIONS]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.installation = installation.id;
+    button.textContent = installation.id === 'all' ? 'All' : installation.label;
+    button.setAttribute('aria-pressed', String(installation.id === floraState.installation));
+    button.addEventListener('click', () => {
+      floraState.installation = installation.id;
+      renderFlora();
+    });
+    installationPills.append(button);
+  }
+  for (const focus of [{ id: 'all', label: 'All focus' }, ...FLORA_FOCUSES]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.focus = focus.id;
+    button.textContent = focus.label;
+    button.setAttribute('aria-pressed', String(focus.id === floraState.focus));
+    button.addEventListener('click', () => {
+      floraState.focus = focus.id;
+      renderFlora();
+    });
+    focusPills.append(button);
+  }
+}
 
 function renderFlora() {
   const grid = $('flora-grid');
   const empty = $('flora-empty');
+  const featuredCount = $('flora-stat-count');
+  const installationsCount = $('flora-stat-installations');
   if (!grid) return;
+  if (featuredCount) featuredCount.textContent = String(FLORA_SPECIES.length);
+  if (installationsCount) installationsCount.textContent = String(FLORA_INSTALLATIONS.length);
   const items = filterFlora(floraState);
   grid.replaceChildren();
+  renderFloraHero();
   if (!items.length) { empty.hidden = false; return; }
   empty.hidden = true;
   for (const species of items) {
     const card = document.createElement('article');
     card.className = 'species-card';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-selected', String(species.id === floraState.selectedId));
     card.innerHTML = `
       <div class="species-card__image"><img src="${species.image}" alt="${escapeHtml(species.name)} illustration" loading="lazy" /></div>
       <div class="species-card__body">
@@ -211,6 +295,20 @@ function renderFlora() {
           <div><strong>${escapeHtml(species.matureSize)}</strong>Mature size</div>
         </div>
       </div>`;
+    const selectSpecies = () => {
+      floraState.selectedId = species.id;
+      renderFloraHero();
+      for (const node of grid.querySelectorAll('.species-card')) {
+        node.setAttribute('aria-selected', String(node === card));
+      }
+    };
+    card.addEventListener('click', selectSpecies);
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        selectSpecies();
+      }
+    });
     grid.append(card);
   }
   for (const btn of document.querySelectorAll('#flora-installation-pills button')) {
@@ -222,27 +320,12 @@ function renderFlora() {
 }
 
 function wireFlora() {
+  renderFloraFilters();
   const search = $('flora-search-input');
   if (search && !search.dataset.wired) {
     search.dataset.wired = 'true';
     search.addEventListener('input', (event) => {
       floraState.query = event.target.value;
-      renderFlora();
-    });
-  }
-  for (const btn of document.querySelectorAll('#flora-installation-pills button')) {
-    if (btn.dataset.wired) continue;
-    btn.dataset.wired = 'true';
-    btn.addEventListener('click', () => {
-      floraState.installation = btn.dataset.installation;
-      renderFlora();
-    });
-  }
-  for (const btn of document.querySelectorAll('#flora-focus-pills button')) {
-    if (btn.dataset.wired) continue;
-    btn.dataset.wired = 'true';
-    btn.addEventListener('click', () => {
-      floraState.focus = btn.dataset.focus;
       renderFlora();
     });
   }
@@ -256,6 +339,24 @@ const avatarMarkup = (partner) => partner.avatar
   ? `<img src="${escapeHtml(partner.avatar)}" alt="" loading="lazy" />`
   : escapeHtml(partner.initials);
 const directoryState = { query: '', category: 'all' };
+
+function renderDirectoryFilters() {
+  const categoryPills = $('directory-category-pills');
+  if (!categoryPills) return;
+  categoryPills.replaceChildren();
+  for (const category of CONTRACTOR_CATEGORIES) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.category = category.id;
+    button.textContent = category.label;
+    button.setAttribute('aria-pressed', String(category.id === directoryState.category));
+    button.addEventListener('click', () => {
+      directoryState.category = category.id;
+      renderDirectory();
+    });
+    categoryPills.append(button);
+  }
+}
 
 function renderDirectory() {
   const grid = $('directory-grid');
@@ -298,7 +399,7 @@ function renderDirectory() {
       const action = event.target.closest('[data-action]')?.dataset.action;
       if (action === 'request-consultation') {
         event.stopPropagation();
-        showStatus(`Request sent to ${partner.name}. They will respond from their verified EcoMetro inbox.`);
+        openConsultationModal(partner);
         return;
       }
       navigate(`profile/${partner.id}`);
@@ -314,19 +415,12 @@ function renderDirectory() {
 }
 
 function wireDirectory() {
+  renderDirectoryFilters();
   const search = $('directory-search-input');
   if (search && !search.dataset.wired) {
     search.dataset.wired = 'true';
     search.addEventListener('input', (event) => {
       directoryState.query = event.target.value;
-      renderDirectory();
-    });
-  }
-  for (const btn of document.querySelectorAll('#directory-category-pills button')) {
-    if (btn.dataset.wired) continue;
-    btn.dataset.wired = 'true';
-    btn.addEventListener('click', () => {
-      directoryState.category = btn.dataset.category;
       renderDirectory();
     });
   }
@@ -399,10 +493,146 @@ function renderProfile(id) {
   for (const btn of grid.querySelectorAll('[data-action]')) {
     btn.addEventListener('click', () => {
       const action = btn.dataset.action;
-      if (action === 'contact-now') showStatus(`Request sent to ${partner.name}. They will respond from their verified EcoMetro inbox.`);
-      if (action === 'message') showStatus(`Drafted a message to ${partner.name}. Switch to the Dashboard to keep working on the model.`);
+      if (action === 'contact-now') openConsultationModal(partner);
+      if (action === 'message') openMessagingModal(partner.id);
     });
   }
+}
+
+// =====================================================================
+// Consultation + messaging
+// =====================================================================
+const consultationState = { partnerId: null };
+const messagingState = {
+  activePartnerId: CONTRACTORS[0]?.id ?? null,
+  threads: new Map(CONTRACTORS.map((partner) => [partner.id, [
+    { from: 'partner', text: `Hello from ${partner.name}. Share your project details and we can start.`, at: new Date().toISOString() }
+  ]]))
+};
+
+function setBodyModalState() {
+  document.body.style.overflow = ($('consultation-modal')?.open || $('messaging-modal')?.open) ? 'hidden' : '';
+}
+
+function openConsultationModal(partner) {
+  const modal = $('consultation-modal');
+  if (!modal || !partner) return;
+  consultationState.partnerId = partner.id;
+  $('consultation-target-label').textContent = `To: ${partner.name}`;
+  $('consultation-message').value = `Hello ${partner.name}, we'd like to request a consultation for ${activeProject.shortName}.`;
+  modal.showModal();
+  setBodyModalState();
+  $('consultation-message').focus();
+}
+
+function closeConsultationModal() {
+  const modal = $('consultation-modal');
+  if (!modal?.open) return;
+  modal.close();
+  setBodyModalState();
+}
+
+function activeMessages() {
+  return messagingState.threads.get(messagingState.activePartnerId) ?? [];
+}
+
+function renderMessageContacts() {
+  const list = $('messaging-contact-list');
+  if (!list) return;
+  list.replaceChildren();
+  for (const partner of CONTRACTORS) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'messaging-contact';
+    button.setAttribute('aria-current', String(partner.id === messagingState.activePartnerId));
+    const latest = (messagingState.threads.get(partner.id) ?? []).at(-1)?.text ?? 'No messages yet';
+    button.innerHTML = `<strong>${escapeHtml(partner.name)}</strong><small>${escapeHtml(latest)}</small>`;
+    button.addEventListener('click', () => {
+      messagingState.activePartnerId = partner.id;
+      renderMessaging();
+    });
+    list.append(button);
+  }
+}
+
+function renderMessagingThread() {
+  const partner = findContractor(messagingState.activePartnerId) ?? CONTRACTORS[0];
+  const thread = $('messaging-thread');
+  const title = $('messaging-chat-name');
+  if (!thread || !title || !partner) return;
+  title.textContent = partner.name;
+  thread.replaceChildren();
+  for (const message of activeMessages()) {
+    const bubble = document.createElement('div');
+    bubble.className = `chat-message ${message.from === 'me' ? 'chat-message--outbound' : 'chat-message--inbound'}`;
+    bubble.textContent = message.text;
+    thread.append(bubble);
+  }
+  thread.scrollTop = thread.scrollHeight;
+}
+
+function renderMessaging() {
+  renderMessageContacts();
+  renderMessagingThread();
+}
+
+function openMessagingModal(partnerId = messagingState.activePartnerId) {
+  if (partnerId) messagingState.activePartnerId = partnerId;
+  const modal = $('messaging-modal');
+  if (!modal) return;
+  renderMessaging();
+  modal.showModal();
+  setBodyModalState();
+  $('messaging-input').focus();
+}
+
+function closeMessagingModal() {
+  const modal = $('messaging-modal');
+  if (!modal?.open) return;
+  modal.close();
+  setBodyModalState();
+}
+
+function appendOutgoingMessage(text) {
+  const content = text.trim();
+  if (!content || !messagingState.activePartnerId) return false;
+  const thread = messagingState.threads.get(messagingState.activePartnerId) ?? [];
+  thread.push({ from: 'me', text: content, at: new Date().toISOString() });
+  messagingState.threads.set(messagingState.activePartnerId, thread);
+  return true;
+}
+
+function wireMessaging() {
+  $('message-launcher')?.addEventListener('click', () => openMessagingModal());
+  $('messaging-close')?.addEventListener('click', closeMessagingModal);
+  $('messaging-modal')?.addEventListener('cancel', (event) => { event.preventDefault(); closeMessagingModal(); });
+  $('consultation-modal')?.addEventListener('cancel', (event) => { event.preventDefault(); closeConsultationModal(); });
+  for (const button of document.querySelectorAll('[data-close-consultation]')) {
+    button.addEventListener('click', closeConsultationModal);
+  }
+  $('consultation-form')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const partnerId = consultationState.partnerId;
+    if (!partnerId) return;
+    messagingState.activePartnerId = partnerId;
+    if (appendOutgoingMessage($('consultation-message').value)) {
+      closeConsultationModal();
+      openMessagingModal(partnerId);
+      showStatus(`Consultation request sent. Continuing in messaging with ${findContractor(partnerId)?.name ?? 'partner'}.`);
+    }
+  });
+  $('messaging-composer')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!appendOutgoingMessage($('messaging-input').value)) return;
+    $('messaging-input').value = '';
+    renderMessaging();
+  });
+  $('messaging-modal')?.addEventListener('click', (event) => {
+    if (event.target === $('messaging-modal')) closeMessagingModal();
+  });
+  $('consultation-modal')?.addEventListener('click', (event) => {
+    if (event.target === $('consultation-modal')) closeConsultationModal();
+  });
 }
 
 // =====================================================================
@@ -1030,6 +1260,7 @@ render();
 refreshImportControls();
 wireFlora();
 wireDirectory();
+wireMessaging();
 
 // Kick off the initial route.
 if (!location.hash) location.hash = '#/dashboard';

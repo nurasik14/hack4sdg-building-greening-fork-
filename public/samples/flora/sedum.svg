@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-label="Sedum roof mix illustration">
+  <defs>
+    <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cfd8dc" />
+      <stop offset="1" stop-color="#8d9aa1" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="200" fill="url(#roof)" />
+  <g fill="#6a8b3a">
+    <circle cx="40" cy="160" r="14" />
+    <circle cx="80" cy="170" r="12" />
+    <circle cx="120" cy="155" r="15" />
+    <circle cx="160" cy="170" r="13" />
+    <circle cx="200" cy="155" r="14" />
+    <circle cx="240" cy="170" r="12" />
+    <circle cx="280" cy="160" r="15" />
+  </g>
+  <g fill="#84a14a">
+    <circle cx="60" cy="150" r="10" />
+    <circle cx="100" cy="160" r="10" />
+    <circle cx="140" cy="145" r="11" />
+    <circle cx="180" cy="155" r="11" />
+    <circle cx="220" cy="145" r="10" />
+    <circle cx="260" cy="160" r="10" />
+  </g>
+  <g fill="#fcb6c2">
+    <circle cx="50" cy="160" r="3" />
+    <circle cx="100" cy="150" r="3" />
+    <circle cx="150" cy="160" r="3" />
+    <circle cx="200" cy="160" r="3" />
+    <circle cx="250" cy="150" r="3" />
+    <circle cx="290" cy="160" r="3" />
+  </g>
+  <g fill="#fde68a">
+    <circle cx="70" cy="150" r="2.5" />
+    <circle cx="125" cy="155" r="2.5" />
+    <circle cx="175" cy="160" r="2.5" />
+    <circle cx="225" cy="150" r="2.5" />
+    <circle cx="270" cy="160" r="2.5" />
+  </g>
+</svg>

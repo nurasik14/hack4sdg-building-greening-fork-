@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="LMC Eco Tower project preview">
+  <defs>
+    <linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a4d2ec" />
+      <stop offset="1" stop-color="#dff1fb" />
+    </linearGradient>
+    <linearGradient id="tower1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a6b54" />
+      <stop offset="1" stop-color="#1d3e2c" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#sky1)" />
+  <g>
+    <rect x="60" y="40" width="80" height="160" fill="url(#tower1)" />
+    <g fill="#6db484">
+      <rect x="62" y="50" width="76" height="14" />
+      <rect x="62" y="80" width="76" height="20" />
+      <rect x="62" y="118" width="76" height="16" />
+      <rect x="62" y="148" width="76" height="22" />
+      <rect x="62" y="180" width="76" height="18" />
+    </g>
+    <g fill="#84c179">
+      <rect x="64" y="56" width="36" height="6" />
+      <rect x="100" y="86" width="36" height="8" />
+      <rect x="64" y="120" width="30" height="6" />
+      <rect x="100" y="152" width="36" height="10" />
+    </g>
+  </g>
+  <rect x="0" y="195" width="200" height="5" fill="#2e5b3a" />
+</svg>

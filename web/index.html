@@ -3,107 +3,846 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Building Greening · Model Workspace</title>
+    <title>EcoMetroLink · Building Greening Workspace</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f3a2b'/%3E%3Cpath d='M16 24c0-6 3-10 8-11-1 6-4 9-8 11Z' fill='%230f9d58'/%3E%3Cpath d='M16 24c0-5-2-8-6-9 1 5 3 8 6 9Z' fill='%234ea87a'/%3E%3Cpath d='M16 25V13' stroke='%23ecf5f0' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="/styles.css" />
     <script type="module" src="/main.js"></script>
   </head>
   <body>
-    <main id="workspace" class="workspace">
-      <section class="model-stage" aria-label="Building model workspace">
-        <div id="bim-container" class="bim-viewport" tabindex="0" aria-label="Interactive IFC building viewer"></div>
-        <div id="viewer-empty" class="viewer-empty">
-          <span class="empty-model-mark" aria-hidden="true">IFC</span>
-          <h2>Start with your building.</h2>
-          <p>Open the office example or import a project IFC.</p>
-          <button id="empty-load-sample" type="button">Open office model</button>
+    <div class="app-shell">
+      <!-- ============== Top navigation ============== -->
+      <header class="top-nav" role="banner">
+        <div class="top-nav__inner">
+          <a class="brand" href="#/dashboard" data-route="dashboard" aria-label="EcoMetroLink home">
+            <span class="brand__mark">EM</span>
+            <span>
+              EcoMetroLink
+              <small>Contractor Directory</small>
+            </span>
+          </a>
+          <nav class="top-nav__links" aria-label="Primary">
+            <a class="top-nav__link" data-route="dashboard" href="#/dashboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+              Dashboard
+            </a>
+            <a class="top-nav__link" data-route="calculator" href="#/calculator">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0M8 19h8"/></svg>
+              Calculator
+            </a>
+            <a class="top-nav__link" data-route="incentives" href="#/incentives">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M5 7l14 10M5 17l14-10"/></svg>
+              Incentives
+            </a>
+            <a class="top-nav__link" data-route="flora" href="#/flora">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c0-4 2-7 5-8-1 4-3 7-5 8zM12 21c0-4-2-7-5-8 1 4 3 7 5 8zM12 21V11M12 11c0-3 2-5 5-6-1 3-3 5-5 6zM12 11c0-3-2-5-5-6 1 3 3 5 5 6z"/></svg>
+              Flora
+            </a>
+            <a class="top-nav__link" data-route="directory" href="#/directory">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Directory
+            </a>
+          </nav>
+          <div class="top-nav__actions">
+            <div class="top-nav__user">
+              <span class="top-nav__user-avatar">EC</span>
+              <span>
+                <span class="top-nav__user-name">EcoMetro Team</span>
+                <span class="top-nav__user-role">Project Workspace</span>
+              </span>
+            </div>
+          </div>
         </div>
-        <div id="loading-overlay" class="loading-overlay" hidden>
-          <div class="loading-placeholder" aria-hidden="true"></div>
-          <p>Preparing building geometry…</p>
-        </div>
-      </section>
-
-      <header class="workspace-header">
-        <div class="brand floating-surface"><span class="brand-mark">BG</span><span>Building Greening<small>Model workspace</small></span></div>
-        <div class="model-title floating-surface"><span class="eyebrow">BUILDING REVIEW</span><h1 id="project-label">Opening office example…</h1></div>
       </header>
 
-      <nav class="workspace-dock floating-surface" aria-label="Workspace tools">
-        <button type="button" data-panel="project-panel" aria-controls="project-panel" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z M4 7.5l8 4.5 8-4.5 M12 12v9" /></svg><span>Project</span></button>
-        <button type="button" data-panel="inspector-panel" aria-controls="inspector-panel" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5" /><circle cx="12" cy="12" r="3" /></svg><span>Inspect</span><span id="selection-dot" class="selection-dot" hidden><span class="sr-only">Component selected</span></span></button>
-        <button type="button" data-panel="comparison" aria-controls="comparison" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-6 M12 20V9 M19 20V4 M3 20h19" /></svg><span>Compare</span></button>
-        <button type="button" data-panel="view-panel" aria-controls="view-panel" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16 M4 17h16" /><circle cx="9" cy="7" r="2" /><circle cx="15" cy="17" r="2" /></svg><span>View</span></button>
-        <span class="dock-divider" aria-hidden="true"></span>
-        <button id="fit-model" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4 M16 4h4v4 M20 16v4h-4 M8 20H4v-4 M9 9h6v6H9Z" /></svg><span>Fit</span></button>
-      </nav>
-
-      <div id="preview-switch" class="preview-switch floating-surface" hidden><button id="preview-before" type="button" aria-pressed="true">Before</button><button id="preview-after" type="button" aria-pressed="false">After</button><span id="preview-plan-label">Light-touch planting</span></div>
-      <div class="viewport-footer"><p id="viewer-status" role="status">Preparing 3D viewer…</p><span>Left drag: orbit · right drag: pan · scroll: zoom</span></div>
-      <aside id="proposal-legend" class="proposal-legend floating-surface" aria-label="Planting location selection" hidden><div><span class="legend-blue"></span>Recommended <span class="legend-green"></span>Selected</div><strong id="proposal-count" role="status">0 selected</strong><p>Click building locations to add / remove. Choices stay selected. These colors mark locations, not planting coverage.</p><button type="button" data-panel="inspector-panel" aria-controls="inspector-panel" aria-expanded="false">Review selected locations</button></aside>
-      <div id="zoom-indicator" class="zoom-indicator floating-surface" title="100% = the latest fitted model view" hidden><span>Zoom</span><output id="zoom-percent" aria-label="Model zoom percentage">100%</output></div>
-
-      <dialog id="project-panel" class="workspace-panel side-panel" aria-labelledby="project-heading">
-        <div class="panel-heading"><div><p class="eyebrow">PROJECT</p><h2 id="project-heading">Model &amp; inputs</h2></div><button type="button" class="close-panel" data-close-panel aria-label="Close project panel">×</button></div>
-        <div class="panel-body">
-          <div class="project-state"><span class="status-dot"></span><strong id="model-status-label">Ready to import</strong><span id="viewer-badge" class="badge">No model loaded</span></div>
-          <label class="upload">Import your IFC<input id="ifc-file" type="file" accept=".ifc" /></label>
-          <div class="sample-picker">
-            <label for="sample-model">Explore a sample</label>
-            <select id="sample-model"><optgroup label="Architectural buildings"><option value="kit-office">KIT office · architectural IFC</option><option value="schependomlaan">Schependomlaan · residential IFC</option><option value="kit-house">KIT house · architectural IFC</option></optgroup><optgroup label="Earlier engine tests"><option value="school-arq">School · architecture Fragments</option><option value="school-str">School · structural IFC</option><option value="test-house">Small house · test IFC</option></optgroup></select>
-            <img id="sample-preview" class="sample-preview" alt="Static geometry preview of the selected architectural IFC model" src="/samples/KIT-Office-preview.png" />
-            <small class="preview-caption">Static IFC geometry preview</small>
-            <button id="load-sample" type="button" class="secondary-button">Open sample model</button>
-            <p id="sample-description" class="note">Architectural office design example from KIT. Fictional design; 10.9 MB.</p>
-            <div class="sample-links"><a id="sample-download" href="/samples/KIT-Office.ifc" download>Download IFC / sample</a><a id="sample-source" href="https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples" target="_blank" rel="noreferrer">Published source</a></div>
+      <main class="app-main" id="app-main">
+        <!-- ============== Dashboard view ============== -->
+        <section class="view" id="view-dashboard" data-view="dashboard" aria-labelledby="dashboard-title">
+          <div class="view__header">
+            <div class="view__heading-row">
+              <div>
+                <span class="view__eyebrow">Project Workspace</span>
+                <h1 class="view__title" id="project-label">Opening office example…</h1>
+                <p class="view__subtitle">Review zone performance, calculate green impact, and manage greening compliance for the Shenzhen–Hong Kong Eco Development Zone.</p>
+              </div>
+              <div class="view__actions">
+                <span class="badge badge--high-compliance">HIGH COMPLIANCE</span>
+                <button class="btn btn--ghost" data-panel="project-panel" type="button" aria-controls="project-panel" aria-haspopup="dialog" aria-expanded="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  Import IFC
+                </button>
+                <button class="btn btn--primary" data-panel="inspector-panel" type="button" aria-controls="inspector-panel" aria-haspopup="dialog" aria-expanded="false">Find planting locations</button>
+              </div>
+            </div>
           </div>
-          <p id="upload-status" class="note import-status">Import an IFC or open a sample to begin.</p>
-          <section class="model-inventory"><div class="subheading"><h3>Model contents</h3><span id="inventory-total">—</span></div><ul id="category-list"><li class="empty-text">Component types appear after loading.</li></ul></section>
-          <details class="input-details"><summary>Comparison inputs <span>Demo</span></summary><label>Comparison period <span>years</span><input id="years" type="number" min="1" step="1" value="20" /></label><label>Installation budget <span>HKD · optional</span><input id="budget" type="number" min="0" step="1000" placeholder="No budget entered" /></label><p class="note">The same confirmed regions and period are used for both plans. Costs and carbon factors remain presentation assumptions.</p></details>
-        </div>
-      </dialog>
 
-      <dialog id="inspector-panel" class="workspace-panel side-panel" aria-labelledby="inspector-heading">
-        <div class="panel-heading"><div><p class="eyebrow">SELECTED COMPONENT</p><h2 id="inspector-heading">Inspect &amp; plan</h2></div><button type="button" class="close-panel" data-close-panel aria-label="Close component panel">×</button></div>
-        <div class="panel-body"><details class="source-inspection"><summary>Focused component · IFC details</summary><div id="selection-details" class="selection-panel empty-text">Select a roof, wall or other component in the model to inspect its IFC identity.</div><button id="clear-selection" type="button" class="secondary-button" disabled>Clear focused component</button></details><section id="inspection-guidance" class="region-editor"><h3>Find planting locations</h3>
-          <p class="notice">Geometry screening · AI model not connected. Suggestions are conditional concepts, not engineering approval.</p>
-          <button id="analyse-building" type="button" class="secondary-button">Find planting locations</button>
-          <details class="voice-controls"><summary>Voice input &amp; questions</summary>
-          <label for="voice-language">Voice language</label><select id="voice-language"><option value="zh-HK">粵語（香港）</option><option value="zh-CN">普通话</option><option value="en-US">English</option></select>
-          <button id="voice-record" type="button" class="secondary-button" aria-pressed="false">Start voice input</button>
-          <p id="voice-status" class="note" role="status">Audio may be processed by your browser's speech service. Review the transcript before asking. Language support depends on your browser.</p>
-          <label for="assistant-question">Ask about roof, facade, terrace or courtyard</label><textarea id="assistant-question" rows="3" maxlength="1000" placeholder="這棟樓邊度可以加綠化？ / Where can we add planting?"></textarea>
-          <button id="assistant-ask" type="button" class="secondary-button">Ask about locations</button>
-          </details>
-          <p id="assistant-answer" class="note" role="status">Load a model to screen locations. Recommended locations appear blue; click the building to select multiple locations in green, then review their areas and checks here.</p>
-          <div id="combination-controls" hidden>
-            <div class="button-group"><button id="select-suggested" type="button">Use recommended locations</button><button id="clear-candidates" type="button">Clear selected locations</button></div>
-            <p class="note">A starting set combines up to 3 roof, 2 facade and 2 explicit terrace candidates, ranked by display area. Review every location and usable area. It is not an engineering-approved or budget-optimised design.</p>
-            <p id="combination-summary" class="note" role="status">Click locations on the building to build a combined proposal.</p>
-            <label class="grid-option"><input id="confirm-combination" type="checkbox" />I have reviewed the selected locations and usable areas, confirm exterior / available space, and acknowledge unresolved professional checks</label>
-            <button id="add-combination" type="button" class="secondary-button" disabled>Add selected regions to both plans</button>
-            <button id="review-combination" type="button" class="secondary-button" data-panel="comparison" disabled>Compare combined plans</button>
-            <p id="combination-status" class="note" role="status"></p>
+          <div class="dashboard-grid">
+            <div class="dashboard-grid__primary">
+              <div class="card viewer-card">
+                <div class="viewer-card__header">
+                  <div>
+                    <div class="card__title">Building Review · 3D Model</div>
+                    <small class="empty-text">Same IFC workflow as before. Click the model to inspect components and add regions.</small>
+                  </div>
+                  <div class="view__actions">
+                    <button class="btn btn--soft btn--pill" id="fit-model" type="button" disabled>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4M9 9h6v6H9z"/></svg>
+                      Fit
+                    </button>
+                    <button class="btn btn--ghost btn--pill" data-panel="view-panel" type="button" aria-controls="view-panel" aria-expanded="false">View settings</button>
+                  </div>
+                </div>
+                <div class="viewer-card__stage">
+                  <div id="bim-container" class="bim-viewport" tabindex="0" aria-label="Interactive IFC building viewer"></div>
+                  <div id="viewer-empty" class="viewer-empty">
+                    <span class="empty-model-mark" aria-hidden="true">IFC</span>
+                    <h2>Start with your building.</h2>
+                    <p>Open the office example or import a project IFC.</p>
+                    <button id="empty-load-sample" type="button" class="btn btn--accent">Open office model</button>
+                  </div>
+                  <div id="loading-overlay" class="loading-overlay" hidden>
+                    <div class="loading-placeholder" aria-hidden="true"></div>
+                    <p>Preparing building geometry…</p>
+                  </div>
+                  <div id="preview-switch" class="preview-switch" hidden>
+                    <button id="preview-before" type="button" aria-pressed="true">Before</button>
+                    <button id="preview-after" type="button" aria-pressed="false">After</button>
+                    <span id="preview-plan-label">Light-touch planting</span>
+                  </div>
+                  <div class="viewport-status">
+                    <p id="viewer-status" role="status">Preparing 3D viewer…</p>
+                    <span>Left drag: orbit · right drag: pan · scroll: zoom</span>
+                  </div>
+                  <div id="zoom-indicator" class="zoom-indicator" title="100% = the latest fitted model view" hidden>
+                    <span>Zoom</span>
+                    <output id="zoom-percent" aria-label="Model zoom percentage">100%</output>
+                  </div>
+                  <aside id="proposal-legend" class="proposal-legend" aria-label="Planting location selection" hidden>
+                    <div><span class="legend-blue"></span>Recommended <span class="legend-green"></span>Selected</div>
+                    <strong id="proposal-count" role="status">0 selected</strong>
+                    <p>Click building locations to add / remove. Choices stay selected. These colors mark locations, not planting coverage.</p>
+                    <button type="button" class="btn btn--soft" data-panel="inspector-panel" aria-controls="inspector-panel" aria-expanded="false">Review selected locations</button>
+                  </aside>
+                  <nav class="workspace-dock" aria-label="Workspace tools">
+                    <button type="button" data-panel="project-panel" aria-controls="project-panel" aria-haspopup="dialog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z M4 7.5l8 4.5 8-4.5 M12 12v9" /></svg>
+                      <span>Project</span>
+                    </button>
+                    <button type="button" data-panel="inspector-panel" aria-controls="inspector-panel" aria-haspopup="dialog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5" /><circle cx="12" cy="12" r="3" /></svg>
+                      <span>Inspect</span>
+                      <span id="selection-dot" class="selection-dot" hidden><span class="sr-only">Component selected</span></span>
+                    </button>
+                    <button type="button" data-panel="comparison" aria-controls="comparison" aria-haspopup="dialog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-6 M12 20V9 M19 20V4 M3 20h19" /></svg>
+                      <span>Compare</span>
+                    </button>
+                    <button type="button" data-panel="view-panel" aria-controls="view-panel" aria-haspopup="dialog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16 M4 17h16" /><circle cx="9" cy="7" r="2" /><circle cx="15" cy="17" r="2" /></svg>
+                      <span>View</span>
+                    </button>
+                  </nav>
+                </div>
+              </div>
+
+              <div class="card calculator-card" aria-label="Calculate new plot impact">
+                <div class="card__heading">
+                  <div>
+                    <span class="eyebrow">Northern Metropolis Zone</span>
+                    <div class="card__title">Calculate New Plot Impact</div>
+                  </div>
+                  <span class="badge badge--accent">3D ECO-MODEL READY</span>
+                </div>
+                <p class="empty-text" style="margin-bottom: 14px;">Enter project dimensions to estimate green impact and compliance readiness.</p>
+                <div class="form-grid">
+                  <label class="field">
+                    Plot Location Zone
+                    <select>
+                      <option>Lok Ma Chau Loop / Futian Border Zone</option>
+                      <option>Yuen Long Eco Corridor</option>
+                      <option>Kai Tak Innovation Hub</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    Plot Area
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <input type="number" value="7200" />
+                      <span class="field__hint">sq.m</span>
+                    </div>
+                  </label>
+                  <label class="field">
+                    Total Floor Area
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <input type="number" value="24500" />
+                      <span class="field__hint">sq.m</span>
+                    </div>
+                  </label>
+                  <label class="field">
+                    Height
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <input type="number" value="85" />
+                      <span class="field__hint">m</span>
+                    </div>
+                  </label>
+                  <label class="field">
+                    Rooftop Area
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <input type="number" value="1800" />
+                      <span class="field__hint">sq.m</span>
+                    </div>
+                  </label>
+                  <label class="field">
+                    Facade Area Eligible for Greenery
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <input type="number" value="4200" />
+                      <span class="field__hint">sq.m</span>
+                    </div>
+                  </label>
+                </div>
+                <div class="form-actions">
+                  <button class="btn btn--primary" data-panel="inspector-panel" type="button" aria-controls="inspector-panel">Calculate Green Impact</button>
+                  <button class="btn btn--ghost" type="button">Reset</button>
+                </div>
+              </div>
+            </div>
+
+            <aside class="dashboard-grid__sidebar" aria-label="Workspace shortcuts">
+              <div class="card">
+                <span class="eyebrow">Quick links</span>
+                <h3 class="card__title" style="margin-top:6px;margin-bottom:14px;">Workspace tools</h3>
+                <nav class="quick-links">
+                  <a href="#/dashboard" data-route="dashboard" aria-current="page">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                    Dashboard
+                  </a>
+                  <a href="#/calculator" data-route="calculator">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0M8 19h8"/></svg>
+                    Calculator
+                  </a>
+                  <a href="#/incentives" data-route="incentives">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7l14 10M5 17l14-10"/></svg>
+                    Incentives
+                  </a>
+                  <a href="#/flora" data-route="flora">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c0-4 2-7 5-8-1 4-3 7-5 8zM12 21c0-4-2-7-5-8 1 4 3 7 5 8zM12 21V11"/></svg>
+                    Flora
+                  </a>
+                  <a href="#/directory" data-route="directory">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                    Directory
+                  </a>
+                </nav>
+              </div>
+
+              <div class="card card--accent">
+                <span class="eyebrow">Zone summary</span>
+                <h3 class="card__title" style="margin-top:6px;">Northern Metropolis Zone</h3>
+                <div class="zone-summary">
+                  <dl>
+                    <dt>Active projects</dt><dd>142</dd>
+                    <dt>Avg. green coverage</dt><dd>34.8%</dd>
+                    <dt>Compliance status</dt><dd><a href="#/incentives" data-route="incentives">View compliance →</a></dd>
+                  </dl>
+                </div>
+              </div>
+            </aside>
           </div>
-          <div id="assistant-candidates"></div>
+        </section>
 
-</section><details class="region-editor"><summary>Custom strip or courtyard</summary><label for="region-type">Region type</label><select id="region-type"><option value="roof">Roof</option><option value="facade">Facade</option><option value="terrace">Balcony / terrace</option><option value="ground">Ground / courtyard</option></select><div id="candidate-fields"><label for="region-candidate">Choose a component, or click the model</label><select id="region-candidate"><option value="">Select a candidate component…</option></select><p class="note">Candidates pass conservative geometry/identity screening. Ordinary floors and steep roof concepts are excluded. Exposure, loading and services still require review.</p></div><div id="surface-crop-fields"><label for="surface-crop">Region extent</label><select id="surface-crop"><option value="full">Whole selected face</option><option value="front">Front edge strip (+Z)</option><option value="back">Back edge strip (−Z)</option><option value="left">Left edge strip (−X)</option><option value="right">Right edge strip (+X)</option></select><label>Strip depth (m)<input id="crop-depth" type="number" min="0.1" step="0.1" value="2" /></label><p class="note">Use an edge strip to reduce a screened surface. Ordinary floor edges do not establish a terrace. World directions may differ from the current camera.</p></div><div id="ground-fields" hidden><label>Width (m)<input id="ground-width" type="number" min="1" value="10" /></label><label>Depth (m)<input id="ground-depth" type="number" min="1" value="6" /></label><label>Horizontal offset (m)<input id="ground-x" type="number" value="0" /></label><label>Offset beyond front of model (m)<input id="ground-z" type="number" value="4" /></label></div><button id="prepare-region" type="button" class="secondary-button" disabled>Review region surface</button><p id="region-draft-status" class="note">Select a component, or define a ground rectangle. You confirm its use; selection alone does not establish suitability.</p><div id="region-confirmation" hidden><div id="region-screening" class="notice"></div><label class="grid-option"><input id="confirm-constraints" type="checkbox" />I confirm this is an exterior / available planting area, and acknowledge unresolved professional checks</label><label>Usable area (m²)<input id="area" type="number" min="0.01" step="0.01" /></label><label class="grid-option"><input id="confirm-area" type="checkbox" />I confirm this region type and usable area for concept comparison</label><button id="add-region" type="button" class="secondary-button" disabled>Add region to both plans</button></div></details><section class="model-inventory"><div class="subheading"><h3>Planned regions</h3><span id="region-count">0</span></div><ul id="region-list"><li class="empty-text">No regions added yet.</li></ul></section><details class="reference-links"><summary>Sample sources &amp; references</summary><a href="/samples/README.md" target="_blank" rel="noreferrer">Model attribution and licenses</a><a href="https://docs.thatopen.com/Tutorials/Components/Front/PostproductionRenderer" target="_blank" rel="noreferrer">That Open rendering reference</a></details></div>
-      </dialog>
+        <!-- ============== Calculator view ============== -->
+        <section class="view" id="view-calculator" data-view="calculator" aria-labelledby="calculator-title">
+          <div class="view__header">
+            <div class="view__heading-row">
+              <div>
+                <span class="view__eyebrow">EcoMetroLink</span>
+                <h1 class="view__title" id="calculator-title">Urban Green Generator</h1>
+                <p class="view__subtitle">Lok Ma Chau Loop Plot #4 · Review the 3D eco-model projection, then save or apply the proposed planting scenario for review.</p>
+              </div>
+              <div class="view__actions">
+                <button class="btn btn--soft" type="button">Live Calculator</button>
+                <button class="btn btn--ghost" type="button">Isometric View</button>
+              </div>
+            </div>
+          </div>
 
-      <dialog id="comparison" class="workspace-panel comparison-panel" aria-labelledby="comparison-heading">
-        <div class="panel-heading"><div><p class="eyebrow">DESIGN OPTIONS / ILLUSTRATIVE</p><h2 id="comparison-heading">Building greening comparison</h2></div><button type="button" class="close-panel" data-close-panel aria-label="Close comparison panel">×</button></div>
-        <div class="panel-body">
-          <div class="comparison-header"><p>Compare the same confirmed regions with two planting plans.</p><div class="view-controls" aria-label="Highlight comparison option"><button id="view-before" type="button" class="active" aria-pressed="true">Before</button><button id="view-extensive" type="button" aria-pressed="false">Light-touch</button><button id="view-intensive" type="button" aria-pressed="false">Landscape mix</button></div></div>
-          <p class="notice">Plans use your confirmed regions and assumed cost/carbon factors. Results cover the proposed interventions, not whole-building emissions or net-zero certification. Plant carbon sequestration is excluded.</p>
-          <button type="button" class="text-button" data-panel="project-panel">Edit comparison period / budget</button>
-          <p id="region-summary" class="note"></p><div id="scenario-results"></div><div id="error" role="alert"></div><button id="export-report" type="button" class="secondary-button" disabled>Download comparison report</button><button id="export-handoff" type="button" class="secondary-button" disabled>Export region &amp; scenario JSON</button>
-          <footer class="footer-panel"><strong>Before implementation</strong><p>Verify roof quantities, structural loading, waterproofing, drainage, local cost quotes and source-backed carbon factors.</p></footer>
+          <div class="calculator-grid">
+            <div class="card calculator-canvas">
+              <div class="calculator-canvas__header">
+                <div>
+                  <span class="eyebrow">3D Eco-Model Projection</span>
+                  <div class="card__title">Urban Green Generator</div>
+                </div>
+                <span class="badge badge--accent">Live · Lok Ma Chau Loop #4</span>
+              </div>
+              <div class="calculator-canvas__stage">
+                <!-- Static illustrative projection of the model with proposed greening. -->
+                <svg viewBox="0 0 800 460" preserveAspectRatio="xMidYMid meet" role="img" aria-label="3D eco-model projection of the building with proposed greening">
+                  <defs>
+                    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#0f3a2b"/>
+                      <stop offset="1" stop-color="#082019"/>
+                    </linearGradient>
+                    <linearGradient id="building" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#36514a"/>
+                      <stop offset="1" stop-color="#1d3a30"/>
+                    </linearGradient>
+                    <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#79c08c"/>
+                      <stop offset="1" stop-color="#2f7b48"/>
+                    </linearGradient>
+                  </defs>
+                  <rect width="800" height="460" fill="url(#bgGrad)"/>
+                  <!-- grid floor -->
+                  <g stroke="rgba(255,255,255,0.08)" stroke-width="0.5">
+                    <line x1="0" y1="380" x2="800" y2="380"/>
+                    <line x1="0" y1="350" x2="800" y2="350"/>
+                    <line x1="0" y1="320" x2="800" y2="320"/>
+                    <line x1="0" y1="290" x2="800" y2="290"/>
+                    <line x1="0" y1="260" x2="800" y2="260"/>
+                    <line x1="100" y1="260" x2="100" y2="380"/>
+                    <line x1="200" y1="260" x2="200" y2="380"/>
+                    <line x1="300" y1="260" x2="300" y2="380"/>
+                    <line x1="400" y1="260" x2="400" y2="380"/>
+                    <line x1="500" y1="260" x2="500" y2="380"/>
+                    <line x1="600" y1="260" x2="600" y2="380"/>
+                    <line x1="700" y1="260" x2="700" y2="380"/>
+                  </g>
+                  <!-- isometric building -->
+                  <g transform="translate(400 380)">
+                    <polygon points="-160,-260 0,-340 160,-260 0,-180" fill="url(#building)" stroke="#0a1f17" stroke-width="1.5"/>
+                    <polygon points="-160,-260 -160,40 0,120 0,-180" fill="#2a443b" stroke="#0a1f17" stroke-width="1.5"/>
+                    <polygon points="0,120 160,40 160,-260 0,-180" fill="#1f352b" stroke="#0a1f17" stroke-width="1.5"/>
+                    <!-- windows -->
+                    <g fill="#7ac0d4" opacity="0.35">
+                      <rect x="-130" y="-200" width="20" height="40"/>
+                      <rect x="-90" y="-180" width="20" height="40"/>
+                      <rect x="-50" y="-160" width="20" height="40"/>
+                      <rect x="-10" y="-140" width="20" height="40"/>
+                      <rect x="30" y="-160" width="20" height="40"/>
+                      <rect x="70" y="-180" width="20" height="40"/>
+                      <rect x="110" y="-200" width="20" height="40"/>
+                    </g>
+                    <!-- green roof -->
+                    <polygon points="-160,-260 0,-340 160,-260 0,-180" fill="url(#roof)" opacity="0.95"/>
+                    <g fill="#a4d99a" opacity="0.85">
+                      <circle cx="-60" cy="-240" r="14"/>
+                      <circle cx="0" cy="-260" r="18"/>
+                      <circle cx="60" cy="-240" r="14"/>
+                      <circle cx="-30" cy="-220" r="10"/>
+                      <circle cx="30" cy="-220" r="10"/>
+                    </g>
+                    <!-- ground greenery -->
+                    <ellipse cx="0" cy="80" rx="280" ry="50" fill="#2f6b3e" opacity="0.55"/>
+                    <g fill="#84c179">
+                      <circle cx="-150" cy="60" r="18"/>
+                      <circle cx="0" cy="80" r="22"/>
+                      <circle cx="150" cy="60" r="18"/>
+                    </g>
+                    <!-- side green wall -->
+                    <g fill="#4a9b5c" opacity="0.85">
+                      <rect x="-160" y="-160" width="6" height="180"/>
+                      <rect x="-148" y="-180" width="6" height="200"/>
+                      <rect x="-136" y="-160" width="6" height="180"/>
+                    </g>
+                    <g fill="#84c179" opacity="0.7">
+                      <circle cx="-156" cy="-140" r="6"/>
+                      <circle cx="-140" cy="-100" r="6"/>
+                      <circle cx="-156" cy="-60" r="6"/>
+                      <circle cx="-140" cy="-20" r="6"/>
+                    </g>
+                  </g>
+                  <!-- glow ring (8.0% rebate visualisation) -->
+                  <g transform="translate(640 100)">
+                    <circle r="56" fill="none" stroke="rgba(15, 157, 88, 0.35)" stroke-width="6"/>
+                    <circle r="56" fill="none" stroke="#0f9d58" stroke-width="6" stroke-dasharray="280 351" transform="rotate(-90)"/>
+                    <text text-anchor="middle" y="-2" fill="#fff" font-family="ui-sans-serif" font-size="14" font-weight="700">64%</text>
+                    <text text-anchor="middle" y="14" fill="rgba(255,255,255,0.7)" font-family="ui-sans-serif" font-size="9" letter-spacing="2">SILVER</text>
+                  </g>
+                </svg>
+              </div>
+              <div class="calculator-canvas__actions">
+                <button class="btn btn--ghost" type="button" data-action="save-scenario">Save Scenario</button>
+                <button class="btn btn--primary" type="button" data-action="apply-review">Apply for Review</button>
+              </div>
+            </div>
+
+            <div class="calculator-side">
+              <div class="card">
+                <span class="eyebrow">Project overview</span>
+                <h3 class="card__title" style="margin-top:6px;">Lok Ma Chau Loop Plot #4</h3>
+                <div class="zone-summary">
+                  <dl>
+                    <dt>Green coverage added</dt><dd>34% (2,450 sq.m)</dd>
+                    <dt>Estimated CO₂ reduction</dt><dd>18.6 tonnes/year</dd>
+                    <dt>Government tax tier</dt><dd>Silver Rebate Tier</dd>
+                  </dl>
+                </div>
+              </div>
+              <div class="metric-tile">
+                <div class="metric-tile__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4-2 8-6 8-12V5l-8-3-8 3v5c0 6 4 10 8 12z"/></svg>
+                </div>
+                <div>
+                  <div class="metric-tile__label">Green coverage added</div>
+                  <div class="metric-tile__value">34% <span class="stat__unit">(2,450 sq.m)</span></div>
+                </div>
+              </div>
+              <div class="metric-tile">
+                <div class="metric-tile__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+                </div>
+                <div>
+                  <div class="metric-tile__label">Estimated CO₂ reduction</div>
+                  <div class="metric-tile__value">18.6 <span class="stat__unit">tonnes/year</span></div>
+                </div>
+              </div>
+              <div class="metric-tile">
+                <div class="metric-tile__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21h14M7 17h10M9 17v-7l3-5 3 5v7M5 7l7 4 7-4-7-4z"/></svg>
+                </div>
+                <div>
+                  <div class="metric-tile__label">Government tax incentive tier</div>
+                  <div class="metric-tile__value">Silver Rebate Tier</div>
+                  <small>Equivalent to 8% corporate income tax rebate.</small>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card__heading">
+                  <span class="eyebrow">Quick actions</span>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button class="btn btn--ghost" type="button" data-action="save-scenario">Save Scenario</button>
+                  <button class="btn btn--primary" type="button" data-action="apply-review">Apply for Review</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============== Incentives view ============== -->
+        <section class="view" id="view-incentives" data-view="incentives" aria-labelledby="incentives-title">
+          <div class="view__header">
+            <div class="view__heading-row">
+              <div>
+                <span class="view__eyebrow">Tax Incentives &amp; Rebates</span>
+                <h1 class="view__title" id="incentives-title">Tax Incentives &amp; Rebates</h1>
+                <p class="view__subtitle">Northern Metropolis Compliance Panel · Track rebate progress, certified compliance authorities, and the milestone checklist required to reach the next tier.</p>
+              </div>
+              <div class="view__actions">
+                <span class="badge badge--outline">Reg #MI-2026-08A</span>
+                <button class="btn btn--primary" type="button">Contact Compliance Team</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="incentives-grid">
+            <aside class="incentives-sidebar" aria-label="Compliance navigation">
+              <div class="nav-card">
+                <h3>Navigation</h3>
+                <div class="nav-card__links">
+                  <a class="nav-card__link" href="#/dashboard" data-route="dashboard">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                    Dashboard
+                  </a>
+                  <a class="nav-card__link" href="#/calculator" data-route="calculator">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0M8 19h8"/></svg>
+                    Calculator
+                  </a>
+                  <a class="nav-card__link" href="#/incentives" data-route="incentives" aria-current="page">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M5 7l14 10M5 17l14-10"/></svg>
+                    Incentives
+                  </a>
+                  <a class="nav-card__link" href="#/flora" data-route="flora">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21V11M12 11c0-3 2-5 5-6-1 3-3 5-5 6zM12 11c0-3-2-5-5-6 1 3 3 5 5 6z"/></svg>
+                    Flora
+                  </a>
+                  <a class="nav-card__link" href="#/directory" data-route="directory">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="7" r="4"/><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/></svg>
+                    Directory
+                  </a>
+                </div>
+                <div class="nav-card__status">
+                  <strong>Compliance status</strong>
+                  3 of 4 milestones are complete. Finalise native species submittal to reach the 12% Gold Tier rebate.
+                </div>
+              </div>
+            </aside>
+
+            <div class="incentives-main">
+              <div class="incentive-summary">
+                <div class="rebate-card">
+                  <div>
+                    <div class="rebate-card__label">Current rebate rate</div>
+                    <div class="rebate-card__value">8.0% Discount</div>
+                    <div class="rebate-card__sub">Corporate income tax rebate on Plot #4</div>
+                  </div>
+                  <div class="rebate-card__ring"><span>Silver</span></div>
+                </div>
+                <div class="progress">
+                  <div class="progress__label">
+                    <span>Progress to Gold Tier (12% rebate)</span>
+                    <span>3 / 4 met</span>
+                  </div>
+                  <div class="progress__bar"><span class="progress__fill" style="width: 75%;"></span></div>
+                </div>
+              </div>
+
+              <div class="incentive-list">
+                <h3>Certified compliance authorities</h3>
+                <ul>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg>
+                    HK Dev Bureau Partnership
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg>
+                    Shenzhen Municipal Gov
+                  </li>
+                </ul>
+              </div>
+
+              <div class="incentive-list">
+                <h3>Milestone checklist</h3>
+                <div class="milestone-list">
+                  <div class="milestone milestone--done">
+                    <span class="milestone__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="5 12 10 17 19 7"/></svg></span>
+                    <div>
+                      <strong>30% Green Coverage Verified</strong>
+                      <small>Roof completes on Jan 14, 2026</small>
+                    </div>
+                    <span class="milestone__meta">Verified by HK Dev Bureau</span>
+                  </div>
+                  <div class="milestone milestone--done">
+                    <span class="milestone__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="5 12 10 17 19 7"/></svg></span>
+                    <div>
+                      <strong>Greywater Recycling Pipeline</strong>
+                      <small>Inspected & linked to Lok Ma Chau main</small>
+                    </div>
+                    <span class="milestone__meta">Inspector: SZ Eco-Env Bureau</span>
+                  </div>
+                  <div class="milestone milestone--done">
+                    <span class="milestone__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="5 12 10 17 19 7"/></svg></span>
+                    <div>
+                      <strong>Biodiversity Survey Submitted</strong>
+                      <small>Pending contractor species submittal</small>
+                    </div>
+                    <span class="milestone__meta">Due: 12 March 2026</span>
+                  </div>
+                  <div class="milestone milestone--pending">
+                    <span class="milestone__check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg></span>
+                    <div>
+                      <strong>Native Species Percentage (&gt;50%)</strong>
+                      <small>Pending contractor species submittal</small>
+                    </div>
+                    <span class="milestone__meta">Final step</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============== Flora view ============== -->
+        <section class="view" id="view-flora" data-view="flora" aria-labelledby="flora-title">
+          <div class="flora-hero">
+            <div class="flora-hero__copy">
+              <span class="view__eyebrow">ECO-METRO: Green Species Finder</span>
+              <h1 class="flora-hero__title" id="flora-title">Flora Database &amp; Biodiversity Guides</h1>
+              <p class="flora-hero__lede">Browse compatible regional flora, compare maintenance needs, and plan biodiverse rooftop, wall, and ground installations with the same trusted EcoMetroLink content adapted for desktop.</p>
+              <div class="flora-hero__actions">
+                <a class="btn btn--primary" href="#/flora" data-action="explore">Explore Species</a>
+                <a class="btn btn--ghost" href="/samples/flora/flora-guide.pdf" download>Download Guide</a>
+              </div>
+            </div>
+            <div class="flora-hero__image">
+              <img src="/samples/flora/bauhinia.svg" alt="Hong Kong Bauhinia illustration" />
+            </div>
+          </div>
+
+          <div class="flora-stats">
+            <div class="card card--light">
+              <div class="stat">
+                <small>Featured species</small>
+                <strong id="flora-stat-count">0</strong>
+                <span class="empty-text">Curated for SZ-HK urban conditions.</span>
+              </div>
+            </div>
+            <div class="card card--light">
+              <div class="stat">
+                <small>Biodiversity focus</small>
+                <strong>Native</strong>
+                <span class="empty-text">Pollinator, edible and native taxa.</span>
+              </div>
+            </div>
+            <div class="card card--light">
+              <div class="stat">
+                <small>Installation types</small>
+                <strong>3</strong>
+                <span class="empty-text">Rooftop, wall, and ground options.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flora-toolbar">
+            <div class="flora-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input id="flora-search-input" type="search" placeholder="Search compatible regional flora…" aria-label="Search flora" />
+            </div>
+            <div class="filter-pills" id="flora-installation-pills" role="tablist" aria-label="Installation type filter">
+              <button type="button" data-installation="all" aria-pressed="true">All</button>
+              <button type="button" data-installation="rooftop" aria-pressed="false">Rooftop</button>
+              <button type="button" data-installation="wall" aria-pressed="false">Wall</button>
+              <button type="button" data-installation="ground" aria-pressed="false">Ground</button>
+            </div>
+            <div class="filter-pills" id="flora-focus-pills" role="tablist" aria-label="Biodiversity focus filter">
+              <button type="button" data-focus="all" aria-pressed="true">All focus</button>
+              <button type="button" data-focus="native" aria-pressed="false">Native</button>
+              <button type="button" data-focus="pollinator" aria-pressed="false">Pollinator</button>
+              <button type="button" data-focus="edible" aria-pressed="false">Edible</button>
+            </div>
+          </div>
+
+          <div class="flora-grid" id="flora-grid" aria-live="polite"></div>
+          <div class="flora-empty" id="flora-empty" hidden>No species match your filters. Try clearing the search or selecting a different installation type.</div>
+        </section>
+
+        <!-- ============== Directory view ============== -->
+        <section class="view" id="view-directory" data-view="directory" aria-labelledby="directory-title">
+          <div class="view__header">
+            <div class="view__heading-row">
+              <div>
+                <span class="view__eyebrow">ECOMETRO LINK</span>
+                <h1 class="view__title" id="directory-title">Eco Partner Network</h1>
+                <p class="view__subtitle">Verified Contractors &amp; Architects · Browse trusted EcoMetro partners, compare specializations, and request a consultation in a single click.</p>
+              </div>
+              <div class="view__actions">
+                <button class="btn btn--ghost" type="button">Contact Specialist</button>
+                <button class="btn btn--primary" type="button">Eco Marketplace</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="directory-toolbar">
+            <div class="flora-search" style="max-width: 420px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input id="directory-search-input" type="search" placeholder="Search partners by specialty or zone…" aria-label="Search partners" />
+            </div>
+            <div class="filter-pills" id="directory-category-pills" role="tablist" aria-label="Category filter">
+              <button type="button" data-category="all" aria-pressed="true">All</button>
+              <button type="button" data-category="architects" aria-pressed="false">Architects</button>
+              <button type="button" data-category="contractors" aria-pressed="false">Contractors</button>
+              <button type="button" data-category="consultants" aria-pressed="false">Consultants</button>
+            </div>
+          </div>
+
+          <div class="directory-grid" id="directory-grid" aria-live="polite"></div>
+          <div class="directory-empty" id="directory-empty" hidden>No partners match the current search. Try a different category or clear the filter.</div>
+        </section>
+
+        <!-- ============== Profile view ============== -->
+        <section class="view" id="view-profile" data-view="profile" aria-labelledby="profile-title">
+          <a class="profile-back" href="#/directory" data-route="directory">← Back to Eco Marketplace</a>
+          <div class="profile-header" id="profile-header">
+            <!-- populated by main.js -->
+          </div>
+          <div class="profile-grid" id="profile-grid">
+            <!-- populated by main.js -->
+          </div>
+        </section>
+
+        <!-- ============== Hidden side panels (preserved IFC workflow) ============== -->
+        <dialog id="project-panel" class="workspace-panel side-panel" aria-labelledby="project-heading">
+          <div class="panel-heading"><div><p class="eyebrow">PROJECT</p><h2 id="project-heading">Model &amp; inputs</h2></div><button type="button" class="close-panel" data-close-panel aria-label="Close project panel">×</button></div>
+          <div class="panel-body">
+            <div class="project-state"><span class="status-dot"></span><strong id="model-status-label">Ready to import</strong><span id="viewer-badge" class="badge badge--green">No model loaded</span></div>
+            <label class="upload">Import your IFC<input id="ifc-file" type="file" accept=".ifc" /></label>
+            <div class="sample-picker">
+              <label for="sample-model">Explore a sample</label>
+              <select id="sample-model">
+                <optgroup label="Architectural buildings">
+                  <option value="kit-office">KIT office · architectural IFC</option>
+                  <option value="schependomlaan">Schependomlaan · residential IFC</option>
+                  <option value="kit-house">KIT house · architectural IFC</option>
+                </optgroup>
+                <optgroup label="Earlier engine tests">
+                  <option value="school-arq">School · architecture Fragments</option>
+                  <option value="school-str">School · structural IFC</option>
+                  <option value="test-house">Small house · test IFC</option>
+                </optgroup>
+              </select>
+              <img id="sample-preview" class="sample-preview" alt="Static geometry preview of the selected architectural IFC model" src="/samples/KIT-Office-preview.png" />
+              <small class="preview-caption">Static IFC geometry preview</small>
+              <button id="load-sample" type="button" class="btn btn--primary">Open sample model</button>
+              <p id="sample-description" class="empty-text">Architectural office design example from KIT. Fictional design; 10.9 MB.</p>
+              <div class="sample-links"><a id="sample-download" href="/samples/KIT-Office.ifc" download>Download IFC / sample</a><a id="sample-source" href="https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples" target="_blank" rel="noreferrer">Published source</a></div>
+            </div>
+            <p id="upload-status" class="empty-text">Import an IFC or open a sample to begin.</p>
+            <section style="border-top: 1px solid var(--color-border); margin-top: 20px; padding-top: 18px;">
+              <div class="card__heading"><h3 class="card__title">Model contents</h3><span id="inventory-total" class="empty-text">—</span></div>
+              <ul id="category-list"><li class="empty-text">Component types appear after loading.</li></ul>
+            </section>
+            <details class="input-details">
+              <summary>Comparison inputs <span>Demo</span></summary>
+              <label>Comparison period <span>years</span><input id="years" type="number" min="1" step="1" value="20" /></label>
+              <label>Installation budget <span>HKD · optional</span><input id="budget" type="number" min="0" step="1000" placeholder="No budget entered" /></label>
+              <p class="empty-text">The same confirmed regions and period are used for both plans. Costs and carbon factors remain presentation assumptions.</p>
+            </details>
+          </div>
+        </dialog>
+
+        <dialog id="inspector-panel" class="workspace-panel side-panel" aria-labelledby="inspector-heading">
+          <div class="panel-heading"><div><p class="eyebrow">SELECTED COMPONENT</p><h2 id="inspector-heading">Inspect &amp; plan</h2></div><button type="button" class="close-panel" data-close-panel aria-label="Close component panel">×</button></div>
+          <div class="panel-body">
+            <details class="source-inspection"><summary>Focused component · IFC details</summary>
+              <div id="selection-details" class="selection-panel empty-text">Select a roof, wall or other component in the model to inspect its IFC identity.</div>
+              <button id="clear-selection" type="button" class="btn btn--ghost" disabled>Clear focused component</button>
+            </details>
+            <section id="inspection-guidance" class="region-editor">
+              <h3 style="font-size:14px;font-weight:700;">Find planting locations</h3>
+              <p class="notice">Geometry screening · AI model not connected. Suggestions are conditional concepts, not engineering approval.</p>
+              <button id="analyse-building" type="button" class="btn btn--primary">Find planting locations</button>
+              <details class="voice-controls"><summary>Voice input &amp; questions</summary>
+                <label class="field" style="margin-top:12px;">Voice language
+                  <select id="voice-language">
+                    <option value="zh-HK">粵語（香港）</option>
+                    <option value="zh-CN">普通话</option>
+                    <option value="en-US">English</option>
+                  </select>
+                </label>
+                <button id="voice-record" type="button" class="btn btn--ghost" aria-pressed="false" style="margin-top:12px;">Start voice input</button>
+                <p id="voice-status" class="empty-text" role="status">Audio may be processed by your browser's speech service. Review the transcript before asking. Language support depends on your browser.</p>
+                <label class="field" style="margin-top:14px;">Ask about roof, facade, terrace or courtyard
+                  <textarea id="assistant-question" rows="3" maxlength="1000" placeholder="這棟樓邊度可以加綠化？ / Where can we add planting?"></textarea>
+                </label>
+                <button id="assistant-ask" type="button" class="btn btn--primary" style="margin-top:12px;">Ask about locations</button>
+              </details>
+              <p id="assistant-answer" class="empty-text" role="status">Load a model to screen locations. Recommended locations appear blue; click the building to select multiple locations in green, then review their areas and checks here.</p>
+              <div id="combination-controls" hidden>
+                <div class="button-group"><button id="select-suggested" type="button" class="btn btn--soft">Use recommended locations</button><button id="clear-candidates" type="button" class="btn btn--ghost">Clear selected locations</button></div>
+                <p class="empty-text">A starting set combines up to 3 roof, 2 facade and 2 explicit terrace candidates, ranked by display area. Review every location and usable area. It is not an engineering-approved or budget-optimised design.</p>
+                <p id="combination-summary" class="empty-text" role="status">Click locations on the building to build a combined proposal.</p>
+                <label class="grid-option"><input id="confirm-combination" type="checkbox" />I have reviewed the selected locations and usable areas, confirm exterior / available space, and acknowledge unresolved professional checks</label>
+                <button id="add-combination" type="button" class="btn btn--primary" disabled>Add selected regions to both plans</button>
+                <button id="review-combination" type="button" class="btn btn--ghost" data-panel="comparison" disabled>Compare combined plans</button>
+                <p id="combination-status" class="empty-text" role="status"></p>
+              </div>
+              <div id="assistant-candidates"></div>
+            </section>
+            <details class="region-editor">
+              <summary>Custom strip or courtyard</summary>
+              <label class="field">Region type
+                <select id="region-type">
+                  <option value="roof">Roof</option>
+                  <option value="facade">Facade</option>
+                  <option value="terrace">Balcony / terrace</option>
+                  <option value="ground">Ground / courtyard</option>
+                </select>
+              </label>
+              <div id="candidate-fields">
+                <label class="field">Choose a component, or click the model
+                  <select id="region-candidate"><option value="">Select a candidate component…</option></select>
+                </label>
+                <p class="empty-text">Candidates pass conservative geometry/identity screening. Ordinary floors and steep roof concepts are excluded. Exposure, loading and services still require review.</p>
+              </div>
+              <div id="surface-crop-fields">
+                <label class="field">Region extent
+                  <select id="surface-crop">
+                    <option value="full">Whole selected face</option>
+                    <option value="front">Front edge strip (+Z)</option>
+                    <option value="back">Back edge strip (−Z)</option>
+                    <option value="left">Left edge strip (−X)</option>
+                    <option value="right">Right edge strip (+X)</option>
+                  </select>
+                </label>
+                <label class="field">Strip depth (m)<input id="crop-depth" type="number" min="0.1" step="0.1" value="2" /></label>
+                <p class="empty-text">Use an edge strip to reduce a screened surface. Ordinary floor edges do not establish a terrace. World directions may differ from the current camera.</p>
+              </div>
+              <div id="ground-fields" hidden>
+                <label class="field">Width (m)<input id="ground-width" type="number" min="1" value="10" /></label>
+                <label class="field">Depth (m)<input id="ground-depth" type="number" min="1" value="6" /></label>
+                <label class="field">Horizontal offset (m)<input id="ground-x" type="number" value="0" /></label>
+                <label class="field">Offset beyond front of model (m)<input id="ground-z" type="number" value="4" /></label>
+              </div>
+              <button id="prepare-region" type="button" class="btn btn--primary" disabled>Review region surface</button>
+              <p id="region-draft-status" class="empty-text">Select a component, or define a ground rectangle. You confirm its use; selection alone does not establish suitability.</p>
+              <div id="region-confirmation" hidden>
+                <div id="region-screening" class="notice"></div>
+                <label class="grid-option"><input id="confirm-constraints" type="checkbox" />I confirm this is an exterior / available planting area, and acknowledge unresolved professional checks</label>
+                <label class="field">Usable area (m²)<input id="area" type="number" min="0.01" step="0.01" /></label>
+                <label class="grid-option"><input id="confirm-area" type="checkbox" />I confirm this region type and usable area for concept comparison</label>
+                <button id="add-region" type="button" class="btn btn--primary" disabled>Add region to both plans</button>
+              </div>
+            </details>
+            <section style="border-top: 1px solid var(--color-border); margin-top: 20px; padding-top: 18px;">
+              <div class="card__heading"><h3 class="card__title">Planned regions</h3><span id="region-count" class="empty-text">0</span></div>
+              <ul id="region-list"><li class="empty-text">No regions added yet.</li></ul>
+            </section>
+            <details class="reference-links">
+              <summary>Sample sources &amp; references</summary>
+              <a href="/samples/README.md" target="_blank" rel="noreferrer">Model attribution and licenses</a>
+              <a href="https://docs.thatopen.com/Tutorials/Components/Front/PostproductionRenderer" target="_blank" rel="noreferrer">That Open rendering reference</a>
+            </details>
+          </div>
+        </dialog>
+
+        <dialog id="comparison" class="workspace-panel comparison-panel" aria-labelledby="comparison-heading">
+          <div class="panel-heading"><div><p class="eyebrow">DESIGN OPTIONS / ILLUSTRATIVE</p><h2 id="comparison-heading">Building greening comparison</h2></div><button type="button" class="close-panel" data-close-panel aria-label="Close comparison panel">×</button></div>
+          <div class="panel-body">
+            <div class="comparison-header">
+              <p>Compare the same confirmed regions with two planting plans.</p>
+              <div class="view-controls" aria-label="Highlight comparison option">
+                <button id="view-before" type="button" class="active" aria-pressed="true">Before</button>
+                <button id="view-extensive" type="button" aria-pressed="false">Light-touch</button>
+                <button id="view-intensive" type="button" aria-pressed="false">Landscape mix</button>
+              </div>
+            </div>
+            <p class="notice">Plans use your confirmed regions and assumed cost/carbon factors. Results cover the proposed interventions, not whole-building emissions or net-zero certification. Plant carbon sequestration is excluded.</p>
+            <button type="button" class="btn btn--text" data-panel="project-panel">Edit comparison period / budget</button>
+            <p id="region-summary" class="empty-text"></p>
+            <div id="scenario-results"></div>
+            <div id="error" role="alert"></div>
+            <button id="export-report" type="button" class="btn btn--primary" disabled>Download comparison report</button>
+            <button id="export-handoff" type="button" class="btn btn--ghost" disabled>Export region &amp; scenario JSON</button>
+            <footer class="footer-panel"><strong>Before implementation</strong><p>Verify roof quantities, structural loading, waterproofing, drainage, local cost quotes and source-backed carbon factors.</p></footer>
+          </div>
+        </dialog>
+
+        <dialog id="view-panel" class="workspace-panel side-panel compact-panel" aria-labelledby="view-heading">
+          <div class="panel-heading"><div><p class="eyebrow">CAMERA &amp; DISPLAY</p><h2 id="view-heading">View settings</h2></div><button type="button" class="close-panel" data-close-panel aria-label="Close view settings">×</button></div>
+          <div class="panel-body">
+            <div class="button-group" style="display:flex;gap:8px;">
+              <button id="view-iso" type="button" class="btn btn--ghost" disabled>3D view</button>
+              <button id="view-top" type="button" class="btn btn--ghost" disabled>Roof view</button>
+            </div>
+            <div style="margin-top: 22px;">
+              <label class="field">Rendering style
+                <select id="render-style">
+                  <option value="shaded">Shaded + edges</option>
+                  <option value="technical">Technical drawing</option>
+                  <option value="basic">Basic · faster</option>
+                </select>
+              </label>
+              <label class="grid-option"><input id="show-grid" type="checkbox" checked />Show ground grid</label>
+            </div>
+            <p class="empty-text" style="margin-top: 16px;">Left drag to orbit. Right drag to pan. Scroll to zoom towards the cursor. Roof view changes the camera only.</p>
+          </div>
+        </dialog>
+      </main>
+
+      <footer class="app-footer" role="contentinfo">
+        <div class="app-footer__inner">
+          <div class="app-footer__brand">
+            <span class="app-footer__brand-mark">EM</span>
+            <span>EcoMetroLink · Contractor Directory</span>
+          </div>
+          <div>
+            <a href="#/dashboard" data-route="dashboard">Dashboard</a>
+            <a href="#/calculator" data-route="calculator">Calculator</a>
+            <a href="#/incentives" data-route="incentives">Incentives</a>
+            <a href="#/flora" data-route="flora">Flora</a>
+            <a href="#/directory" data-route="directory">Directory</a>
+          </div>
         </div>
-      </dialog>
-
-      <dialog id="view-panel" class="workspace-panel side-panel compact-panel" aria-labelledby="view-heading">
-        <div class="panel-heading"><div><p class="eyebrow">CAMERA &amp; DISPLAY</p><h2 id="view-heading">View settings</h2></div><button type="button" class="close-panel" data-close-panel aria-label="Close view settings">×</button></div>
-        <div class="panel-body"><div class="button-group"><button id="view-iso" type="button" disabled>3D view</button><button id="view-top" type="button" disabled>Roof view</button></div><div class="render-controls"><label for="render-style">Rendering style</label><select id="render-style"><option value="shaded">Shaded + edges</option><option value="technical">Technical drawing</option><option value="basic">Basic · faster</option></select><label class="grid-option"><input id="show-grid" type="checkbox" checked />Show ground grid</label></div><p class="note">Left drag to orbit. Right drag to pan. Scroll to zoom towards the cursor. Roof view changes the camera only.</p></div>
-      </dialog>
-    </main>
+      </footer>
+    </div>
   </body>
 </html>

@@ -1,13 +1,22 @@
+// EcoMetroLink workspace entry point.
+// Preserves the existing IFC, region and comparison workflow from main.js, then
+// layers a multi-view shell on top: Dashboard, Calculator, Incentives, Flora,
+// Directory and a partner Profile page (hash routing).
+
 import { calculatePlan, PLANS, REGION_TYPES } from '../src/domain/greening-plan.js';
+import { filterFlora } from '../src/data/flora.js';
+import { CONTRACTORS, findContractor, filterContractors } from '../src/data/contractors.js';
 
 const $ = (id) => document.getElementById(id);
-// Delegation also covers dynamically created region-removal buttons.
+
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+// ----- Button ripple (preserved) ----------------------------------------
 function buttonRipple(event) {
   if (reducedMotion.matches || (event.type === 'pointerdown' && event.button !== 0) ||
       (event.type === 'click' && event.detail !== 0)) return;
   const button = event.target instanceof Element ? event.target.closest('button, label.upload') : null;
-  if (!button || !button.closest('#workspace') || button.matches(':disabled') ||
+  if (!button || !button.closest('.app-shell') || button.matches(':disabled') ||
       button.querySelector('input:disabled')) return;
   const box = button.getBoundingClientRect();
   if (!box.width || !box.height) return;
@@ -29,10 +38,308 @@ function buttonRipple(event) {
 }
 document.addEventListener('pointerdown', buttonRipple);
 document.addEventListener('click', buttonRipple);
+
 const money = (value) => `HK$${Math.round(value).toLocaleString('en-HK')}`;
 const number = (value) => Math.round(value).toLocaleString('en-HK');
+const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+
+// =====================================================================
+// Routing — light hash router
+// =====================================================================
+const ROUTES = ['dashboard', 'calculator', 'incentives', 'flora', 'directory', 'profile'];
+const KNOWN_ROUTES = new Set(ROUTES);
+
+function parseRoute() {
+  const raw = (location.hash || '').replace(/^#\/?/, '').trim();
+  if (!raw) return { name: 'dashboard', params: {} };
+  const [head, ...rest] = raw.split('/');
+  if (!KNOWN_ROUTES.has(head)) return { name: 'dashboard', params: {} };
+  if (head === 'profile') return { name: 'profile', params: { id: decodeURIComponent(rest.join('/') || '') } };
+  return { name: head, params: {} };
+}
+
+function navigate(route) {
+  if (!route) return;
+  location.hash = route.startsWith('#') ? route : `#/${route}`;
+}
+
+function setActiveNav(routeName) {
+  for (const link of document.querySelectorAll('[data-route]')) {
+    const target = link.dataset.route;
+    const isCurrent = target === routeName || (routeName === 'profile' && target === 'directory');
+    if (isCurrent) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  }
+}
+
+function showView(routeName) {
+  for (const view of document.querySelectorAll('.view')) {
+    const isCurrent = view.dataset.view === routeName;
+    if (isCurrent) view.setAttribute('data-active', '');
+    else view.removeAttribute('data-active');
+  }
+}
+
+function renderRoute() {
+  const { name, params } = parseRoute();
+  showView(name);
+  setActiveNav(name);
+  if (name === 'flora') renderFlora();
+  if (name === 'directory') renderDirectory();
+  if (name === 'profile') renderProfile(params.id);
+  // Mount the 3D viewer on demand. It stays attached to the dashboard;
+  // the surrounding view is hidden when navigating away, so the renderer
+  // is no longer visible. Pause/resume keep the GPU cost down.
+  if (name === 'dashboard') {
+    mountViewer();
+    if (viewer?.resume) viewer.resume();
+  } else {
+    if (viewer?.pause) viewer.pause();
+  }
+  if (name !== 'dashboard') {
+    for (const panel of workspacePanels) if (panel.open) closePanel(panel, { restoreFocus: false });
+  }
+  const active = document.querySelector(`.view[data-view="${name}"]`);
+  if (active) active.scrollIntoView({ block: 'start' });
+}
+
+window.addEventListener('hashchange', renderRoute);
+
+// =====================================================================
+// Flora page
+// =====================================================================
+const floraState = { query: '', installation: 'all', focus: 'all' };
+
+function renderFlora() {
+  const grid = $('flora-grid');
+  const empty = $('flora-empty');
+  if (!grid) return;
+  const items = filterFlora(floraState);
+  grid.replaceChildren();
+  if (!items.length) { empty.hidden = false; return; }
+  empty.hidden = true;
+  for (const species of items) {
+    const card = document.createElement('article');
+    card.className = 'species-card';
+    card.innerHTML = `
+      <div class="species-card__image"><img src="${species.image}" alt="${escapeHtml(species.name)} illustration" loading="lazy" /></div>
+      <div class="species-card__body">
+        <div class="species-card__head">
+          <div>
+            <div class="species-card__title">${escapeHtml(species.name)}</div>
+            <em class="species-card__sci">${escapeHtml(species.scientificName)}</em>
+          </div>
+          <span class="species-card__star" aria-label="Rating ${species.score} out of 5">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 14.7 8.6 22 9.3l-5.5 4.8L18 21.5 12 17.8 6 21.5l1.5-7.4L2 9.3l7.3-.7z"/></svg>
+            ${species.score.toFixed(1)}
+          </span>
+        </div>
+        <p class="species-card__summary">${escapeHtml(species.summary)}</p>
+        <div class="species-card__tags">
+          ${species.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+        </div>
+        <div class="species-card__metrics">
+          <div><strong>${escapeHtml(species.maintenance)}</strong>Maintenance</div>
+          <div><strong>${escapeHtml(species.matureSize)}</strong>Mature size</div>
+        </div>
+      </div>`;
+    grid.append(card);
+  }
+  for (const btn of document.querySelectorAll('#flora-installation-pills button')) {
+    btn.setAttribute('aria-pressed', String(btn.dataset.installation === floraState.installation));
+  }
+  for (const btn of document.querySelectorAll('#flora-focus-pills button')) {
+    btn.setAttribute('aria-pressed', String(btn.dataset.focus === floraState.focus));
+  }
+}
+
+function wireFlora() {
+  const search = $('flora-search-input');
+  if (search && !search.dataset.wired) {
+    search.dataset.wired = 'true';
+    search.addEventListener('input', (event) => {
+      floraState.query = event.target.value;
+      renderFlora();
+    });
+  }
+  for (const btn of document.querySelectorAll('#flora-installation-pills button')) {
+    if (btn.dataset.wired) continue;
+    btn.dataset.wired = 'true';
+    btn.addEventListener('click', () => {
+      floraState.installation = btn.dataset.installation;
+      renderFlora();
+    });
+  }
+  for (const btn of document.querySelectorAll('#flora-focus-pills button')) {
+    if (btn.dataset.wired) continue;
+    btn.dataset.wired = 'true';
+    btn.addEventListener('click', () => {
+      floraState.focus = btn.dataset.focus;
+      renderFlora();
+    });
+  }
+}
+
+// =====================================================================
+// Directory page
+// =====================================================================
+const directoryState = { query: '', category: 'all' };
+
+function renderDirectory() {
+  const grid = $('directory-grid');
+  const empty = $('directory-empty');
+  if (!grid) return;
+  const items = filterContractors(directoryState);
+  grid.replaceChildren();
+  if (!items.length) { empty.hidden = false; return; }
+  empty.hidden = true;
+  for (const partner of items) {
+    const card = document.createElement('article');
+    card.className = 'partner-card';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.dataset.partnerId = partner.id;
+    card.innerHTML = `
+      <div class="partner-card__head">
+        <span class="partner-avatar" aria-hidden="true">${escapeHtml(partner.initials)}</span>
+        <div>
+          <div class="partner-card__name">${escapeHtml(partner.name)}</div>
+          <div class="partner-card__meta">
+            <span class="partner-card__verified">${escapeHtml(partner.status)}</span>
+            <span>${escapeHtml(partner.certification)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="partner-card__meta">
+        <strong>★ ${partner.rating.toFixed(1)}</strong>
+        <span>(${partner.reviews} Reviews)</span>
+        <span>·</span>
+        <span>${partner.projects} Eco Projects</span>
+      </div>
+      <p class="partner-card__about">${escapeHtml(partner.about)}</p>
+      <div class="partner-card__tags">${partner.specializations.slice(0, 3).map((s) => `<span class="tag">${escapeHtml(s)}</span>`).join('')}</div>
+      <div class="partner-card__actions">
+        <button class="btn btn--ghost" type="button" data-action="view-profile">View Profile</button>
+        <button class="btn btn--primary" type="button" data-action="request-consultation">Request Consultation</button>
+      </div>`;
+    card.addEventListener('click', (event) => {
+      const action = event.target.closest('[data-action]')?.dataset.action;
+      if (action === 'request-consultation') {
+        event.stopPropagation();
+        showStatus(`Request sent to ${partner.name}. They will respond from their verified EcoMetro inbox.`);
+        return;
+      }
+      navigate(`profile/${partner.id}`);
+    });
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate(`profile/${partner.id}`); }
+    });
+    grid.append(card);
+  }
+  for (const btn of document.querySelectorAll('#directory-category-pills button')) {
+    btn.setAttribute('aria-pressed', String(btn.dataset.category === directoryState.category));
+  }
+}
+
+function wireDirectory() {
+  const search = $('directory-search-input');
+  if (search && !search.dataset.wired) {
+    search.dataset.wired = 'true';
+    search.addEventListener('input', (event) => {
+      directoryState.query = event.target.value;
+      renderDirectory();
+    });
+  }
+  for (const btn of document.querySelectorAll('#directory-category-pills button')) {
+    if (btn.dataset.wired) continue;
+    btn.dataset.wired = 'true';
+    btn.addEventListener('click', () => {
+      directoryState.category = btn.dataset.category;
+      renderDirectory();
+    });
+  }
+}
+
+// =====================================================================
+// Profile page
+// =====================================================================
+function renderProfile(id) {
+  const partner = findContractor(id) ?? CONTRACTORS[0];
+  if (!partner) return;
+  const header = $('profile-header');
+  const grid = $('profile-grid');
+  if (!header || !grid) return;
+  header.innerHTML = `
+    <span class="profile-header__avatar" aria-hidden="true">${escapeHtml(partner.initials)}</span>
+    <div>
+      <h1 class="profile-header__name" id="profile-title">${escapeHtml(partner.name)}</h1>
+      <div class="profile-header__meta">
+        <span class="badge badge--green">${escapeHtml(partner.status)} Certified</span>
+        <span class="badge badge--accent">${escapeHtml(partner.certification)}</span>
+        <span class="star">★ ${partner.rating.toFixed(1)} (${partner.reviews} Reviews)</span>
+      </div>
+    </div>`;
+  const projectImages = ['lmc-tower', 'futian-hub', 'yuen-long'];
+  grid.innerHTML = `
+    <div class="profile-main">
+      <section class="section-card">
+        <h3>About Partner</h3>
+        <p>${escapeHtml(partner.about)}</p>
+      </section>
+      <section class="section-card">
+        <h3>Core Specializations</h3>
+        <div>${partner.specializations.map((s) => `<span class="tag">${escapeHtml(s)}</span>`).join('')}</div>
+      </section>
+      <section class="section-card">
+        <h3>Past Sustainable Projects</h3>
+        <div class="projects-grid">
+          ${partner.pastProjects.map((project, i) => `
+            <div class="project-thumb">
+              <img src="/samples/projects/${projectImages[i % projectImages.length]}.svg" alt="${escapeHtml(project.name)} preview" loading="lazy" />
+              <div class="project-thumb__caption">
+                <strong>${escapeHtml(project.name)}</strong>
+                <small>${escapeHtml(project.coverage)}</small>
+              </div>
+            </div>`).join('')}
+        </div>
+      </section>
+      <section class="section-card">
+        <h3>Regulatory Certifications</h3>
+        <ul class="certifications">${partner.certifications.map((c) => `<li>${escapeHtml(c)}</li>`).join('')}</ul>
+      </section>
+    </div>
+    <aside class="profile-side">
+      <section class="section-card">
+        <h3>Quick Actions</h3>
+        <div style="display:flex;gap:8px;flex-direction:column;">
+          <button class="btn btn--primary" type="button" data-action="contact-now">Contact Now</button>
+          <button class="btn btn--ghost" type="button" data-action="message">Message</button>
+        </div>
+      </section>
+      <section class="section-card">
+        <h3>Overview</h3>
+        <p class="profile-header__meta star">★ ${partner.rating.toFixed(1)} · ${partner.reviews} Reviews</p>
+        <h3 style="margin-top:14px;">Core Specializations</h3>
+        <div>${partner.specializations.map((s) => `<span class="tag tag--outline">${escapeHtml(s)}</span>`).join('')}</div>
+        <h3 style="margin-top:14px;">Regulatory Certifications</h3>
+        <ul class="certifications">${partner.certifications.map((c) => `<li>${escapeHtml(c)}</li>`).join('')}</ul>
+      </section>
+    </aside>`;
+  for (const btn of grid.querySelectorAll('[data-action]')) {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      if (action === 'contact-now') showStatus(`Request sent to ${partner.name}. They will respond from their verified EcoMetro inbox.`);
+      if (action === 'message') showStatus(`Drafted a message to ${partner.name}. Switch to the Dashboard to keep working on the model.`);
+    });
+  }
+}
+
+// =====================================================================
+// IFC workflow (preserved, with viewer lazy mount + pause-on-hide)
+// =====================================================================
 let selected = null;
 let viewer;
+let viewerMounted = false;
 let importing = false;
 let selectedComponent = null;
 let plannedRegions = [];
@@ -49,6 +356,50 @@ let recommendedGuids = new Map();
 let recommendationVersion = null;
 let lastHighlightKey = null;
 const candidateCache = new Map();
+let loadedModel = null;
+
+const workspacePanels = [...document.querySelectorAll('.workspace-panel')];
+const panelLaunchers = [...document.querySelectorAll('[data-panel][aria-expanded]')];
+
+function syncPanelLaunchers() {
+  for (const launcher of panelLaunchers) {
+    launcher.setAttribute('aria-expanded', String($(launcher.dataset.panel).open));
+  }
+}
+function closePanel(panel, { restoreFocus = true } = {}) {
+  if (!panel?.open) return;
+  panel.close();
+  syncPanelLaunchers();
+  if (restoreFocus) panelLaunchers.find((button) => button.dataset.panel === panel.id)?.focus();
+}
+function openPanel(id, { focus = true } = {}) {
+  const panel = $(id);
+  if (panel.open) return;
+  const previousFocus = document.activeElement;
+  for (const other of workspacePanels) closePanel(other, { restoreFocus: false });
+  panel.show();
+  syncPanelLaunchers();
+  if (!focus) (previousFocus === document.body ? $('bim-container') : previousFocus)?.focus({ preventScroll: true });
+}
+for (const button of document.querySelectorAll('[data-panel]')) button.addEventListener('click', () => {
+  const panel = $(button.dataset.panel);
+  if (!panel) return;
+  if (panel.open) closePanel(panel);
+  else openPanel(panel.id);
+  if (button.classList.contains('text-button')) {
+    document.querySelector('.input-details').open = true;
+    $('years').focus({ preventScroll: false });
+  }
+});
+for (const button of document.querySelectorAll('[data-close-panel]')) button.addEventListener('click', () => closePanel(button.closest('dialog')));
+for (const panel of workspacePanels) panel.addEventListener('close', syncPanelLaunchers);
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || event.defaultPrevented) return;
+  const panel = workspacePanels.find((item) => item.open);
+  if (panel) { event.preventDefault(); closePanel(panel); }
+});
+
+// ----- IFC analysis workflow (preserved) --------------------------------
 async function screenedCandidates(type) {
   if (!viewer || !loadedModel || importing) return [];
   const model = loadedModel, version = model.modelVersion, key = `${version}:${type}`;
@@ -85,58 +436,11 @@ $('region-candidate').addEventListener('change', async (event) => {
   try { await viewer.highlightRoof(event.target.value); }
   catch (error) { $('region-draft-status').textContent = error.message; }
 });
-const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 function calculationInputs() {
   return { regions: plannedRegions, years: Number($('years').value), budgetHkd: $('budget').value === '' ? undefined : Number($('budget').value) };
 }
 function planResults() { return PLANS.map((plan) => calculatePlan({ ...calculationInputs(), plan })); }
-let loadedModel = null;
-const workspacePanels = [...document.querySelectorAll('.workspace-panel')];
-const panelLaunchers = [...document.querySelectorAll('[data-panel][aria-expanded]')];
 
-function syncPanelLaunchers() {
-  for (const launcher of panelLaunchers) {
-    launcher.setAttribute('aria-expanded', String($(launcher.dataset.panel).open));
-  }
-}
-
-function closePanel(panel, { restoreFocus = true } = {}) {
-  if (!panel?.open) return;
-  panel.close();
-  syncPanelLaunchers();
-  if (restoreFocus) panelLaunchers.find((button) => button.dataset.panel === panel.id)?.focus();
-}
-
-function openPanel(id, { focus = true } = {}) {
-  const panel = $(id);
-  if (panel.open) return;
-  const previousFocus = document.activeElement;
-  for (const other of workspacePanels) closePanel(other, { restoreFocus: false });
-  // Nonmodal dialogs leave the model interactive; only the panel occupies pointer space.
-  panel.show();
-  syncPanelLaunchers();
-  if (!focus) (previousFocus === document.body ? $('bim-container') : previousFocus)?.focus({ preventScroll: true });
-}
-
-for (const button of document.querySelectorAll('[data-panel]')) button.addEventListener('click', () => {
-  const panel = $(button.dataset.panel);
-  if (panel.open) closePanel(panel);
-  else openPanel(panel.id);
-  if (button.classList.contains('text-button')) {
-    document.querySelector('.input-details').open = true;
-    $('years').focus({ preventScroll: false });
-  }
-});
-for (const button of document.querySelectorAll('[data-close-panel]')) button.addEventListener('click', () => closePanel(button.closest('dialog')));
-for (const panel of workspacePanels) panel.addEventListener('close', syncPanelLaunchers);
-document.addEventListener('keydown', (event) => {
-  if (event.key !== 'Escape' || event.defaultPrevented) return;
-  const panel = workspacePanels.find((item) => item.open);
-  if (panel) {
-    event.preventDefault();
-    closePanel(panel);
-  }
-});
 async function analyseLocations(question = '', { open = true } = {}) {
   if (open) openPanel('inspector-panel');
   if (!loadedModel || importing) { $('assistant-answer').textContent = 'Load a building before finding planting candidates.'; return; }
@@ -165,24 +469,24 @@ async function analyseLocations(question = '', { open = true } = {}) {
         const choice = document.createElement('div'); choice.className = 'candidate-choice';
         const name = document.createElement('strong'); name.textContent = `${candidate.name} · ${candidate.globalId.slice(-6)}`;
         choice.append(name);
-        const estimate = document.createElement('p'); estimate.className = 'note'; estimate.textContent = `${candidate.geometryAreaM2.toFixed(1)} m² compatible display estimate · conditional`;
+        const estimate = document.createElement('p'); estimate.className = 'empty-text'; estimate.textContent = `${candidate.geometryAreaM2.toFixed(1)} m² compatible display estimate · conditional`;
         const details = document.createElement('details'), summary = document.createElement('summary'), reason = document.createElement('p');
-        summary.textContent = 'Why this candidate / missing checks'; reason.className = 'note';
+        summary.textContent = 'Why this candidate / missing checks'; reason.className = 'empty-text';
         reason.textContent = [...candidate.screening.reasons, ...candidate.screening.missing].join(' '); details.append(summary, reason);
-        const systems = document.createElement('p'); systems.className = 'note'; systems.textContent = PLANS.map(plan => `${plan.name}: ${plan.profiles[type].name}`).join(' · ');
+        const systems = document.createElement('p'); systems.className = 'empty-text'; systems.textContent = PLANS.map(plan => `${plan.name}: ${plan.profiles[type].name}`).join(' · ');
         const areaLabel = document.createElement('label'); areaLabel.className = 'candidate-area'; areaLabel.append('Usable area (m²)');
         const area = document.createElement('input'); area.type = 'number'; area.min = '.01'; area.step = '.01'; area.max = String(candidate.geometryAreaM2);
         area.value = previous.get(candidate.globalId)?.area ?? (Math.floor(candidate.geometryAreaM2 * 100) / 100).toFixed(2); areaLabel.append(area);
         const areaError = document.createElement('p'); areaError.className = 'candidate-area-error'; areaError.id = `proposal-area-${type}-${candidate.localId}`; areaError.hidden = true; areaError.setAttribute('role', 'alert');
         area.setAttribute('aria-describedby', areaError.id);
-        const locate = document.createElement('button'); locate.type = 'button'; locate.textContent = 'Locate & inspect';
+        const locate = document.createElement('button'); locate.type = 'button'; locate.className = 'btn btn--ghost'; locate.textContent = 'Locate & inspect';
         locate.addEventListener('click', async () => {
           if (loadedModel?.modelVersion !== version || importing || applyingCombination) return;
           $('region-type').value = type; updateRegionType();
           try { await viewer.highlightRoof(candidate.globalId); openPanel('inspector-panel'); }
           catch (error) { $('assistant-answer').textContent = error.message; }
         });
-        const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remove from selection';
+        const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'btn btn--ghost'; remove.textContent = 'Remove from selection';
         const record = { type, candidate, picked: previous.get(candidate.globalId)?.type === type, area, areaError, locate, remove, row, section };
         remove.addEventListener('click', () => { record.picked = false; $('confirm-combination').checked = false; updateCombinationControls(); });
         area.addEventListener('input', () => { $('confirm-combination').checked = false; updateCombinationControls(); });
@@ -200,7 +504,6 @@ async function analyseLocations(question = '', { open = true } = {}) {
     const chinese = /[\u3400-\u9fff]/.test(question) || (!question && $('voice-language').value.startsWith('zh'));
     const summary = Object.entries(counts).map(([type, count]) => `${chinese ? {roof:'屋顶',facade:'立面',terrace:'露台',ground:'庭院'}[type] : REGION_TYPES[type]}: ${count}`).join(' · ');
     $('assistant-answer').textContent = chinese ? `初筛：${summary}。蓝色是推荐起点，绿色是已选位置。关闭面板，直接点击建筑加入或取消；点击别处保留之前的选择。Inspect 只列出你选中的位置，核查可用面积和工程条件后统一加入两套方案。立面需确认外墙，普通楼板不当作露台，庭院需单独确认用地。当前使用规则筛选，尚未接入 AI。` : `Conditional candidates: ${summary}. Blue marks a suggested starting set; green marks your selections. Close Inspect and click the building to add or remove locations. Earlier choices remain selected. Review usable areas and missing engineering checks here before adding the set to both plans. Exterior walls and land availability require confirmation. Rule-based screening; AI is not connected.`;
-
   } catch (error) { if (epoch === assistantEpoch) { proposalRows = previousRows; $('assistant-candidates').replaceChildren(...previousSections); $('assistant-answer').textContent = `Location screening failed: ${error.message}. Earlier selections are preserved. Try finding locations again.`; } }
   finally { if (epoch === assistantEpoch) { analysing = false; $('combination-controls').hidden = !proposalRows.length; refreshImportControls(); } }
 }
@@ -237,7 +540,6 @@ function updateCombinationControls() {
   const ids = { recommended: [...new Set(recommended.map(row => row.candidate.localId))], picked: chosen.map(row => row.candidate.localId), version: loadedModel?.modelVersion };
   const key = JSON.stringify(ids);
   if (viewer && key !== lastHighlightKey) { lastHighlightKey = key; void viewer.setProposalHighlights(ids).catch(error => { lastHighlightKey = null; showStatus(`Could not highlight locations: ${error.message}`); }); }
-
 }
 function toggleModelLocation(selection) {
   if (importing || analysing || applyingCombination || selection.modelVersion !== recommendationVersion) return;
@@ -414,6 +716,7 @@ function showRegions(regions) {
   $('region-list').replaceChildren();
   for (const region of regions) {
     const item = document.createElement('li'), text = document.createElement('span'), note = document.createElement('small'), remove = document.createElement('button');
+    remove.className = 'btn btn--ghost';
     text.textContent = `${REGION_TYPES[region.type]} · ${region.usableArea.value.toFixed(2)} m²`;
     note.textContent = region.name; text.append(note);
     remove.type = 'button'; remove.textContent = 'Remove'; remove.setAttribute('aria-label', `Remove ${region.name}`);
@@ -587,54 +890,67 @@ for (const [id, method] of [['fit-model', 'fit'], ['clear-selection', 'clearSele
   });
 }
 for (const [buttonId, scenarioId] of [['view-before', null], ['view-extensive', 'light'], ['view-intensive', 'landscape']]) $(buttonId).addEventListener('click', () => setPreview(scenarioId));
+
+async function mountViewer() {
+  if (viewerMounted || !$('bim-container')) return;
+  viewerMounted = true;
+  try {
+    const { createBimViewer } = await import('../src/adapters/bim-viewer.js');
+    viewer = await createBimViewer($('bim-container'), {
+      onSelection: showSelection,
+      onPick: toggleModelLocation,
+      onRegions: showRegions,
+      onStatus: showStatus,
+      onZoom: (percent) => {
+        $('zoom-indicator').hidden = percent === null;
+        if (percent !== null) $('zoom-percent').textContent = `${percent}%`;
+      },
+      onModel: (model) => {
+        assistantEpoch++; analysing = false; combinationEpoch++; applyingCombination = false; proposalRows = []; recommendedGuids.clear(); recommendationVersion = null; lastHighlightKey = null; $('proposal-legend').hidden = true; candidateCache.clear(); stopVoice();
+        $('combination-controls').hidden = true; $('confirm-combination').checked = false; $('combination-status').textContent = '';
+        $('assistant-candidates').replaceChildren();
+        $('assistant-answer').textContent = 'Find candidates for the current model. Nothing is added automatically.';
+        loadedModel = model;
+        $('project-label').textContent = model?.fileName ?? 'Start a building review';
+        $('model-status-label').textContent = model ? `${model.componentCount.toLocaleString()} components` : 'Ready to import';
+        $('viewer-badge').textContent = model ? (model.sourceFormat === 'frag' ? 'Fragments · IFC-derived' : 'IFC geometry') : 'No model loaded';
+        $('inventory-total').textContent = model ? model.componentCount.toLocaleString() : '—';
+        $('category-list').replaceChildren();
+        for (const category of model?.categoryCounts ?? []) {
+          const item = document.createElement('li');
+          const label = document.createElement('span');
+          const count = document.createElement('span');
+          label.textContent = category.name;
+          count.textContent = category.count.toLocaleString();
+          item.append(label, count);
+          $('category-list').append(item);
+        }
+        if (!model) {
+          const item = document.createElement('li');
+          item.className = 'empty-text';
+          item.textContent = 'Component types appear after loading.';
+          $('category-list').append(item);
+        }
+        refreshImportControls();
+      }
+    });
+    showStatus('3D viewer ready. Select an IFC file or load the building sample.');
+    refreshImportControls();
+    void loadSample();
+  } catch (error) {
+    showStatus(`Could not initialize the 3D viewer: ${error.message}`);
+  }
+}
+
 render();
 refreshImportControls();
-try {
-  const { createBimViewer } = await import('../src/adapters/bim-viewer.js');
-  viewer = await createBimViewer($('bim-container'), {
-    onSelection: showSelection,
-    onPick: toggleModelLocation,
-    onRegions: showRegions,
-    onStatus: showStatus,
-    onZoom: (percent) => {
-      $('zoom-indicator').hidden = percent === null;
-      if (percent !== null) $('zoom-percent').textContent = `${percent}%`;
-    },
-    onModel: (model) => {
-      assistantEpoch++; analysing = false; combinationEpoch++; applyingCombination = false; proposalRows = []; recommendedGuids.clear(); recommendationVersion = null; lastHighlightKey = null; $('proposal-legend').hidden = true; candidateCache.clear(); stopVoice();
-      $('combination-controls').hidden = true; $('confirm-combination').checked = false; $('combination-status').textContent = '';
-      $('assistant-candidates').replaceChildren();
-      $('assistant-answer').textContent = 'Find candidates for the current model. Nothing is added automatically.';
-      loadedModel = model;
-      $('project-label').textContent = model?.fileName ?? 'Start a building review';
-      $('model-status-label').textContent = model ? `${model.componentCount.toLocaleString()} components` : 'Ready to import';
-      $('viewer-badge').textContent = model ? (model.sourceFormat === 'frag' ? 'Fragments · IFC-derived' : 'IFC geometry') : 'No model loaded';
-      $('inventory-total').textContent = model ? model.componentCount.toLocaleString() : '—';
-      $('category-list').replaceChildren();
-      for (const category of model?.categoryCounts ?? []) {
-        const item = document.createElement('li');
-        const label = document.createElement('span');
-        const count = document.createElement('span');
-        label.textContent = category.name;
-        count.textContent = category.count.toLocaleString();
-        item.append(label, count);
-        $('category-list').append(item);
-      }
-      if (!model) {
-        const item = document.createElement('li');
-        item.className = 'empty-text';
-        item.textContent = 'Component types appear after loading.';
-        $('category-list').append(item);
-      }
-      refreshImportControls();
-    }
-  });
-  showStatus('3D viewer ready. Select an IFC file or load the building sample.');
-  refreshImportControls();
-  void loadSample();
-} catch (error) {
-  showStatus(`Could not initialize the 3D viewer: ${error.message}`);
-}
+wireFlora();
+wireDirectory();
+
+// Kick off the initial route.
+if (!location.hash) location.hash = '#/dashboard';
+renderRoute();
+
 if (import.meta.hot) import.meta.hot.dispose(() => {
   document.removeEventListener('pointerdown', buttonRipple);
   document.removeEventListener('click', buttonRipple);
